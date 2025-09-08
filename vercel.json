@@ -1,18 +1,14 @@
 {
   "version": 2,
   "functions": {
-    "api/index.ts": {
+    "api/index.js": {
       "runtime": "@vercel/node@3.0.19",
       "includeFiles": "dist/**"
     }
   },
   "routes": [
-    { "src": "/uploads/(.*)", "dest": "/uploads/$1" },
-    { "src": "/(.*)", "dest": "/api/index.ts" }
+    { "src": "/(.*)", "dest": "/api/index.js" }
   ],
-  "staticFiles": {
-    "uploads/**": true
-  },
   "env": {
     "NODE_ENV": "production"
   }
