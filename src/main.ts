@@ -1,6 +1,5 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
-// import * as jsonServer from 'json-server';
 import * as dotenv from 'dotenv';
 import * as fs from 'fs';
 import { uploadPath } from './utils/uploadFileHandler';
@@ -14,14 +13,15 @@ async function bootstrap() {
   if (!fs.existsSync(uploadPath)) {
     fs.mkdirSync(uploadPath, { recursive: true });
   }
+
   app.useStaticAssets(uploadPath, {
     prefix: '/uploads/',
   });
-    await app.init();
-    return app.getHttpAdapter().getInstance();
 
-  // app.setGlobalPrefix("/api/v1")
-  console.log(`Server Listening at Port ${process.env.PORT}`);
+  await app.init(); // don’t call listen()
+  return app.getHttpAdapter().getInstance(); // return handler
 }
-bootstrap();
+
+// ⚠️ Don’t invoke bootstrap() here.
+// Just export the promise for Vercel
 export default bootstrap();
