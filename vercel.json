@@ -2,12 +2,12 @@
   "version": 2,
   "functions": {
     "api/index.js": {
-      "runtime": "vercel-node@1.15.4",
+      "runtime": "vercel-node@3.0.19",
       "includeFiles": "dist/**"
     }
   },
   "routes": [
-    { "src": "/(.*)", "dest": "api/index.js" }
+    { "src": "/(.*)", "dest": "/api/index.js" }
   ],
   "env": {
     "NODE_ENV": "production"
