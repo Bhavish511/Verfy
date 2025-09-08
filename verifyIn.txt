@@ -1,0 +1,7 @@
+roles for user : member,submember
+User fields : email,password,id,financeId,currently_at(club_Id),roles(member/submember),UserId
+club fields : id,name,location,memberId
+finance fields: id,total Allowance,totalSpent
+transaction fields : id,clubId,bill,issuedBy(userId),category,status,verifyCharge(boolean),flagChargeId
+flagCharge:id,comment,userId,,reasons[]
+daily_expenses:id,money_spent,createdAt,UserId

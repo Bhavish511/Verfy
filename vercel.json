@@ -1,0 +1,8 @@
+{
+  "version": 2,
+  "buildCommand": "npm ci && npm run build",
+  "rewrites": [
+    { "source": "/api/mock/(.*)", "destination": "/api/mock.ts" },
+    { "source": "/api/(.*)", "destination": "/api/index.ts" }
+  ]
+}
