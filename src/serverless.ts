@@ -1,3 +1,4 @@
+// src/serverless.ts
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { ExpressAdapter } from '@nestjs/platform-express';
@@ -9,7 +10,6 @@ let cachedServer: any;
 async function bootstrapServer() {
   const expressApp = express();
   const app = await NestFactory.create(AppModule, new ExpressAdapter(expressApp));
-  // app.enableCors(); // if needed
   await app.init();
   return serverless(expressApp);
 }
