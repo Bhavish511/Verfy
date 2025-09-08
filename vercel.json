@@ -1,16 +1,14 @@
 {
   "version": 2,
-  "builds": [
-    { "src": "api/index.ts", "use": "@vercel/node" }
-  ],
-  "routes": [
-    { "src": "/(.*)", "dest": "api/index.ts" }
-  ],
   "functions": {
-    "api/index.ts": {
+    "api/index.js": {
+      "runtime": "nodejs18.x",
       "includeFiles": "dist/**"
     }
   },
+  "routes": [
+    { "src": "/(.*)", "dest": "api/index.js" }
+  ],
   "env": {
     "NODE_ENV": "production"
   }
