@@ -17,8 +17,11 @@ async function bootstrap() {
   app.useStaticAssets(uploadPath, {
     prefix: '/uploads/',
   });
-  await app.listen(process.env.PORT ?? 3000);
+    await app.init();
+    return app.getHttpAdapter().getInstance();
+
   // app.setGlobalPrefix("/api/v1")
   console.log(`Server Listening at Port ${process.env.PORT}`);
 }
 bootstrap();
+export default bootstrap();
