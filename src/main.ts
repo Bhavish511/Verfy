@@ -4,6 +4,8 @@ import * as dotenv from 'dotenv';
 import * as fs from 'fs';
 import { uploadPath } from './utils/uploadFileHandler';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import 'tsconfig-paths/register';
+
 
 dotenv.config();
 
