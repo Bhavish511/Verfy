@@ -1,4 +1,5 @@
 {
+<<<<<<< HEAD
   "version": 2,
   "functions": {
     "api/index.js": {
@@ -13,3 +14,16 @@
     "NODE_ENV": "production"
   }
 }
+=======
+	"version": 2,
+	"builds": [
+		{ "src": "api/index.ts", "use": "@vercel/node" }
+	],
+	"routes": [
+		{ "src": "/uploads/(.*)", "dest": "/uploads/$1" },
+		{ "src": "/(.*)", "dest": "api/index.ts" }
+	]
+}
+
+
+>>>>>>> 90f5e62 (first commit)

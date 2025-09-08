@@ -17,7 +17,7 @@ export interface DatabaseData {
 @Injectable()
 export class JsonServerService {
   private readonly logger = new Logger(JsonServerService.name);
-  private readonly dbPath = path.join(process.cwd(), 'db.json');
+  private readonly dbPath = path.join(process.env.VERCEL ? '/tmp' : process.cwd(), 'db.json');
   private data: DatabaseData;
 
   constructor() {
