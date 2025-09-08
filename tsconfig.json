@@ -15,7 +15,8 @@
     "outDir": "./dist",
     "baseUrl": "./",
     "paths": {
-      "*": ["src/*"]   // 👈 this fixes "src/..." imports
+      "src/*": ["src/*"],
+      "*": ["node_modules/*"]
     },
     "incremental": true,
     "skipLibCheck": true,
