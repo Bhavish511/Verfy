@@ -10,6 +10,9 @@
     { "src": "/uploads/(.*)", "dest": "/uploads/$1" },
     { "src": "/(.*)", "dest": "/api/index.ts" }
   ],
+  "staticFiles": {
+    "uploads/**": true
+  },
   "env": {
     "NODE_ENV": "production"
   }

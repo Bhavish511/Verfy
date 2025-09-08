@@ -6,24 +6,32 @@ import { uploadPath } from './utils/uploadFileHandler';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import 'tsconfig-paths/register';
 
-
 dotenv.config();
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
+  // Ensure uploads folder exists
   if (!fs.existsSync(uploadPath)) {
     fs.mkdirSync(uploadPath, { recursive: true });
   }
 
+  // Serve static files
   app.useStaticAssets(uploadPath, {
     prefix: '/uploads/',
   });
 
-  await app.init(); // don’t call listen()
-  return app.getHttpAdapter().getInstance(); // return handler
+  // Enable CORS for testing (adjust frontend URL if needed)
+  app.enableCors({
+    origin: '*',
+    credentials: true,
+  });
+
+  // Use PORT from Railway environment, default to 3000
+  const PORT = process.env.PORT || 3000;
+  await app.listen(PORT);
+
+  console.log(`NestJS server is running on port ${PORT}`);
 }
 
-// ⚠️ Don’t invoke bootstrap() here.
-// Just export the promise for Vercel
-export default bootstrap();
+bootstrap();

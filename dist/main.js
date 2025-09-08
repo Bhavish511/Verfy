@@ -48,8 +48,13 @@ async function bootstrap() {
     app.useStaticAssets(uploadFileHandler_1.uploadPath, {
         prefix: '/uploads/',
     });
-    await app.init();
-    return app.getHttpAdapter().getInstance();
+    app.enableCors({
+        origin: '*',
+        credentials: true,
+    });
+    const PORT = process.env.PORT || 3000;
+    await app.listen(PORT);
+    console.log(`NestJS server is running on port ${PORT}`);
 }
-exports.default = bootstrap();
+bootstrap();
 //# sourceMappingURL=main.js.map
