@@ -20,7 +20,7 @@
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
     "vercel-build": "npm run build",
-    "postbuild": "cp -f db.json dist/ 2>/dev/null || true"
+    "postbuild": "node scripts/postbuild-copy.js"
   },
   "engines": {
     "node": "18.x || 20.x"
