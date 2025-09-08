@@ -8,7 +8,7 @@ const dotenv = require('dotenv');
 const { uploadPath } = require('../dist/utils/uploadFileHandler');
 const express = require('express');
 
-let server;
+let server = globalThis.__vercelNestServer;
 
 async function bootstrap() {
   console.log('[bootstrap] Initializing Nest application');
@@ -37,6 +37,16 @@ async function bootstrap() {
     next();
   });
 
+  // Normalize paths coming from Vercel (strip leading /api for framework routing)
+  app.use((req, _res, next) => {
+    if (typeof req.url === 'string' && req.url.startsWith('/api/')) {
+      const originalUrl = req.url;
+      req.url = req.url.replace(/^\/api\//, '/');
+      console.log('[path-rewrite] url', { originalUrl, rewrittenUrl: req.url });
+    }
+    next();
+  });
+
   // Re-add JSON and URL-encoded parsers with sane limits
   app.use(express.json({ limit: '5mb' }));
   app.use(express.urlencoded({ extended: true, limit: '5mb' }));
@@ -57,7 +67,7 @@ async function bootstrap() {
   return serverless(expressApp);
 }
 
-module.exports = async function handler(req, res) {
+async function handler(req, res) {
   console.log('[handler] Incoming request', {
     method: req.method,
     url: req.url,
@@ -65,8 +75,12 @@ module.exports = async function handler(req, res) {
   });
   if (!server) {
     server = await bootstrap();
+    globalThis.__vercelNestServer = server;
   }
   return server(req, res);
-};
+}
+
+module.exports = handler;
+module.exports.default = handler;
 
 
