@@ -38,23 +38,22 @@ const app_module_1 = require("./app.module");
 const dotenv = __importStar(require("dotenv"));
 const fs = __importStar(require("fs"));
 const uploadFileHandler_1 = require("./utils/uploadFileHandler");
-require("tsconfig-paths/register");
 dotenv.config();
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
-    if (!fs.existsSync(uploadFileHandler_1.uploadPath)) {
-        fs.mkdirSync(uploadFileHandler_1.uploadPath, { recursive: true });
+    app.enableCors({ origin: '*', credentials: true });
+    if (fs.existsSync(uploadFileHandler_1.uploadPath)) {
+        app.useStaticAssets(uploadFileHandler_1.uploadPath, { prefix: '/uploads/' });
     }
-    app.useStaticAssets(uploadFileHandler_1.uploadPath, {
-        prefix: '/uploads/',
-    });
-    app.enableCors({
-        origin: '*',
-        credentials: true,
-    });
+    else {
+        console.log(`Uploads folder not found, skipping static assets setup.`);
+    }
     const PORT = process.env.PORT || 3000;
     await app.listen(PORT);
-    console.log(`NestJS server is running on port ${PORT}`);
+    console.log(`🚀 NestJS server running on port ${PORT}`);
 }
-bootstrap();
+bootstrap().catch(err => {
+    console.error('Error starting server:', err);
+    process.exit(1);
+});
 //# sourceMappingURL=main.js.map
