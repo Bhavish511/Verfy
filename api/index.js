@@ -1,7 +1,7 @@
-// api/index.js
-import 'tsconfig-paths/register'; // For path aliases
+// api/index.ts
+import 'tsconfig-paths/register';
 import { NestFactory } from '@nestjs/core';
-import { AppModule } from '../dist/app.module'; // Import from compiled JS
+import { AppModule } from '../dist/app.module';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import serverless from 'serverless-http';
 import * as fs from 'fs';
@@ -10,30 +10,25 @@ import { uploadPath } from '../dist/utils/uploadFileHandler';
 let server;
 
 async function bootstrap() {
-    // Create NestJS app as NestExpressApplication
-    const app = await NestFactory.create<NestExpressApplication>(AppModule, {
-        logger: ['error', 'warn', 'log'],
-    });
+    // Force type as NestExpressApplication
+    const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
-    // Enable CORS
-    app.enableCors({ origin: '*', credentials: true });
+    // Enable CORS safely
+    if (typeof app.enableCors === 'function') {
+        app.enableCors({ origin: '*', credentials: true });
+    }
 
-    // Ensure upload directory exists
+    // Ensure upload folder exists
     if (!fs.existsSync(uploadPath)) {
         fs.mkdirSync(uploadPath, { recursive: true });
     }
 
-    // Initialize app without listening (Vercel serverless)
     await app.init();
 
-    // Get underlying Express instance
     const expressApp = app.getHttpAdapter().getInstance();
-
-    // Wrap with serverless-http
     return serverless(expressApp);
 }
 
-// Serverless handler
 export default async function handler(req, res) {
     if (!server) {
         server = await bootstrap();
