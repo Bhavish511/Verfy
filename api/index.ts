@@ -31,5 +31,6 @@ export default async function handler(req: any, res: any) {
   if (!cachedServer) {
     cachedServer = await bootstrapServer();
   }
+  
   return cachedServer(req, res);
 }
