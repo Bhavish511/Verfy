@@ -6,6 +6,7 @@ const serverless = require('serverless-http');
 const fs = require('fs');
 const dotenv = require('dotenv');
 const { uploadPath } = require('../dist/utils/uploadFileHandler');
+const express = require('express');
 
 let server;
 
@@ -16,11 +17,29 @@ async function bootstrap() {
     dotenv.config();
   }
 
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, { bodyParser: false });
 
   if (typeof app.enableCors === 'function') {
     app.enableCors({ origin: '*', credentials: true });
   }
+
+  // Workaround: strip Content-Length before our parsers run to avoid raw-body errors
+  app.use((req, _res, next) => {
+    try {
+      const hasContentLength = typeof req.headers?.['content-length'] !== 'undefined';
+      const hasTransferEncoding = typeof req.headers?.['transfer-encoding'] !== 'undefined';
+      if (hasContentLength && !hasTransferEncoding) {
+        delete req.headers['content-length'];
+      }
+    } catch (_) {
+      // no-op
+    }
+    next();
+  });
+
+  // Re-add JSON and URL-encoded parsers with sane limits
+  app.use(express.json({ limit: '5mb' }));
+  app.use(express.urlencoded({ extended: true, limit: '5mb' }));
 
   // Ensure uploads directory exists (on Vercel this will be /tmp/uploads)
   if (!fs.existsSync(uploadPath)) {
