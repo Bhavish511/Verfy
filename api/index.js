@@ -47,9 +47,39 @@ async function bootstrap() {
     next();
   });
 
-  // Re-add JSON and URL-encoded parsers with sane limits
-  app.use(express.json({ limit: '5mb' }));
-  app.use(express.urlencoded({ extended: true, limit: '5mb' }));
+  // Lightweight JSON parser to avoid raw-body/content-length issues
+  app.use((req, _res, next) => {
+    const contentType = req.headers['content-type'] || '';
+    const isJson = typeof contentType === 'string' && contentType.includes('application/json');
+    if (!isJson || req.method === 'GET' || req.method === 'HEAD') return next();
+
+    let bytesRead = 0;
+    const chunks = [];
+    const maxBytes = 5 * 1024 * 1024; // 5mb
+    let ended = false;
+    const done = (err) => {
+      if (ended) return;
+      ended = true;
+      if (err) return next(err);
+      try {
+        const raw = Buffer.concat(chunks).toString('utf8');
+        req.body = raw ? JSON.parse(raw) : {};
+      } catch (e) {
+        return next(e);
+      }
+      next();
+    };
+
+    req.on('data', (chunk) => {
+      bytesRead += chunk.length;
+      if (bytesRead > maxBytes) {
+        return done(new Error('Payload too large'));
+      }
+      chunks.push(chunk);
+    });
+    req.on('end', () => done());
+    req.on('error', (e) => done(e));
+  });
 
   // Ensure uploads directory exists (on Vercel this will be /tmp/uploads)
   if (!fs.existsSync(uploadPath)) {
