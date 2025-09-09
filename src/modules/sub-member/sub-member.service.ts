@@ -327,7 +327,7 @@ export class SubMemberService {
             fullname: user.fullname,
             email: user.email,
             relation: user.relation,
-            allowance: user.allowance,
+            allowance: Number(finance?.totalAllowance ?? 0),
           },
         },
       };
@@ -407,7 +407,7 @@ export class SubMemberService {
             fullname: user.fullname,
             email: user.email,
             relation: user.relation,
-            allowance: user.allowance,
+            allowance: Number(finance?.totalAllowance ?? 0),
           },
         },
       };
