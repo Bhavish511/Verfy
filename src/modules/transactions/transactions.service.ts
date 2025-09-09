@@ -425,48 +425,52 @@ private txTime(tx: Tx): number {
         }
       }
       
-      // Group transactions by day
-      const groupedTransactions = transactions.reduce((groups: any, transaction: any) => {
-        const ts = transaction.createdAt ?? transaction.date ?? transaction.updatedAt;
-        const date = new Date(ts).toISOString().split('T')[0];
-        if (!groups[date]) {
-          groups[date] = {
-            date,
-            transactions: [],
-            totalSpent: 0
-          };
-        }
-        groups[date].transactions.push(transaction);
-        groups[date].totalSpent += Number(transaction.bill) || 0;
-        return groups;
-      }, {});
-      
-      // Convert to array and sort by date
-      const feedData = Object.values(groupedTransactions).sort((a: any, b: any) => 
-        new Date(b.date).getTime() - new Date(a.date).getTime()
-      );
-      
-      // Count applied filters
-      const appliedFilters = Object.keys(filters).filter(key => filters[key] !== undefined && filters[key] !== null && filters[key] !== '');
-      const filtersCount = appliedFilters.length;
+      if (userRole === 'member') {
+        // Enrich transactions with userName (align with getTransactionFeed)
+        const allUsers = await this.jsonServerService.getUsers();
+        const userById = new Map(allUsers.map((u: any) => [String(u.id), u]));
 
-      // Unified pending info (works for member or submember)
-      const pendingUnverified = transactions.filter((tx: any) => tx.status === 'pending' && !tx.verifyCharge);
-      const pendingApprovals = pendingUnverified.length;
+        const enriched = (transactions as any[]).map((tx: any) => ({
+          ...tx,
+          userName: userById.get(String(tx.userId))?.fullname || 'Unknown',
+        }));
 
-      return {
-        success: true,
-        message: 'Transaction feed retrieved successfully',
-        data: {
-          transactionsByDay: feedData,
-          totalTransactions: transactions.length,
-          totalSpent: transactions.reduce((sum: number, tx: any) => sum + (Number(tx.bill) || 0), 0),
-          filtersApplied: filtersCount,
-          appliedFilters: appliedFilters,
-          pendingUnverified,
-          pendingApprovals
-        }
-      };
+        // Separate pending unverified from the list
+        const pendingUnverified = enriched.filter(
+          (tx: any) => tx.status === 'pending' && !tx.verifyCharge,
+        );
+        const remaining = enriched.filter(
+          (tx: any) => !(tx.status === 'pending' && !tx.verifyCharge),
+        );
+
+        const grouped = this.groupTransactionsByDay(remaining as any);
+
+        return {
+          success: true,
+          message: 'Transactions fetched successfully',
+          data: {
+            pendingUnverified,
+            transactions: grouped,
+          },
+        };
+      }
+
+      // submember response (grouped, each item includes userName)
+      {
+        const allUsers = await this.jsonServerService.getUsers();
+        const userById = new Map(allUsers.map((u: any) => [String(u.id), u]));
+        const enriched = (transactions as any[]).map((tx: any) => ({
+          ...tx,
+          userName: userById.get(String(tx.userId))?.fullname || 'Unknown',
+        }));
+        return {
+          success: true,
+          message: 'Transactions fetched successfully',
+          data: {
+            transactions: this.groupTransactionsByDay(enriched as any),
+          },
+        };
+      }
     } catch (error) {
       throw new InternalServerErrorException(error.message);
     }
