@@ -23,6 +23,24 @@ async function bootstrap() {
     app.enableCors({ origin: '*', credentials: true });
   }
 
+  // Global safety timeout (20s) to avoid hanging requests
+  app.use((req, res, next) => {
+    const timeoutMs = 20000;
+    let finished = false;
+    const timer = setTimeout(() => {
+      if (!finished && !res.headersSent) {
+        try {
+          res.statusCode = 504;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ success: false, message: 'Request timed out' }));
+        } catch (_) {}
+      }
+    }, timeoutMs);
+    res.on('finish', () => { finished = true; clearTimeout(timer); });
+    res.on('close', () => { finished = true; clearTimeout(timer); });
+    next();
+  });
+
   // Workaround: strip Content-Length before our parsers run to avoid raw-body errors
   app.use((req, _res, next) => {
     try {
@@ -79,6 +97,22 @@ async function bootstrap() {
     });
     req.on('end', () => done());
     req.on('error', (e) => done(e));
+    req.on('aborted', () => done(new Error('Client aborted')));
+  });
+
+  // Final error handler to guarantee a response
+  app.use((err, _req, res, _next) => {
+    try {
+      const status = typeof err.status === 'number' ? err.status : 500;
+      const message = err?.message || 'Internal Server Error';
+      if (!res.headersSent) {
+        res.statusCode = status;
+        res.setHeader('Content-Type', 'application/json');
+        res.end(JSON.stringify({ success: false, message }));
+        return;
+      }
+    } catch (_) {}
+    try { res.end(); } catch (_) {}
   });
 
   // Ensure uploads directory exists (on Vercel this will be /tmp/uploads)

@@ -31,13 +31,7 @@ export class TransactionsController {
 
   @Get('transaction-feed')
   @UseGuards(AuthGuard)
-  getTransactionFeed(@Req() req) {    
-    return this.transactionsService.getTransactionFeed(req);
-  }
-
-  @Get('transaction-feed/filtered')
-  @UseGuards(AuthGuard)
-  getFilteredTransactionFeed(
+  getTransactionFeed(
     @Req() req,
     @Query('status') status?: string,
     @Query('category') category?: string,

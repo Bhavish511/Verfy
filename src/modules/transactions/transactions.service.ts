@@ -356,7 +356,7 @@ private txTime(tx: Tx): number {
         ]);
 
         const subMembers = allUsers.filter(
-          (u: any) => String(u.userId) === userId && u.roles === 'submember'
+          (u: any) => String(u.parentId) === userId && u.roles === 'submember'
         );
 
         const allowedUserIds = new Set<string>([
@@ -408,7 +408,8 @@ private txTime(tx: Tx): number {
               startDate = new Date(filters.fromDate);
               const endDate = new Date(filters.toDate);
               transactions = transactions.filter((tx: any) => {
-                const txDate = new Date(tx.createdAt);
+                const ts = tx.createdAt ?? tx.date ?? tx.updatedAt;
+                const txDate = new Date(ts);
                 return txDate >= startDate && txDate <= endDate;
               });
             }
@@ -417,7 +418,8 @@ private txTime(tx: Tx): number {
         
         if (filters.dateRange !== 'custom') {
           transactions = transactions.filter((tx: any) => {
-            const txDate = new Date(tx.createdAt);
+            const ts = tx.createdAt ?? tx.date ?? tx.updatedAt;
+            const txDate = new Date(ts);
             return txDate >= startDate;
           });
         }
@@ -425,7 +427,8 @@ private txTime(tx: Tx): number {
       
       // Group transactions by day
       const groupedTransactions = transactions.reduce((groups: any, transaction: any) => {
-        const date = new Date(transaction.createdAt).toISOString().split('T')[0];
+        const ts = transaction.createdAt ?? transaction.date ?? transaction.updatedAt;
+        const date = new Date(ts).toISOString().split('T')[0];
         if (!groups[date]) {
           groups[date] = {
             date,
@@ -447,6 +450,10 @@ private txTime(tx: Tx): number {
       const appliedFilters = Object.keys(filters).filter(key => filters[key] !== undefined && filters[key] !== null && filters[key] !== '');
       const filtersCount = appliedFilters.length;
 
+      // Unified pending info (works for member or submember)
+      const pendingUnverified = transactions.filter((tx: any) => tx.status === 'pending' && !tx.verifyCharge);
+      const pendingApprovals = pendingUnverified.length;
+
       return {
         success: true,
         message: 'Transaction feed retrieved successfully',
@@ -455,7 +462,9 @@ private txTime(tx: Tx): number {
           totalTransactions: transactions.length,
           totalSpent: transactions.reduce((sum: number, tx: any) => sum + (Number(tx.bill) || 0), 0),
           filtersApplied: filtersCount,
-          appliedFilters: appliedFilters
+          appliedFilters: appliedFilters,
+          pendingUnverified,
+          pendingApprovals
         }
       };
     } catch (error) {
