@@ -45,7 +45,7 @@ export class SubMemberService {
     currently_at: null,
     roles: 'submember',
   };
-  
+
   async switchClub(clubId: string, req) {
     try {
       const user = req.user;
@@ -231,14 +231,41 @@ export class SubMemberService {
     try {
       const subMember = await this.jsonServerService.getUser(id);
       if (!subMember) {
-        throw new BadRequestException('Sub-member not found');
+        return {
+          success: false,
+          message: 'Sub-member not found',
+          data: null,
+        };
       }
 
       if (allowance < 0) {
-        throw new BadRequestException('Allowance cannot be less than zero');
+        return {
+          success: false,
+          message: 'Allowance cannot be less than zero',
+          data: null,
+        };
       }
 
-      const finance = await this.jsonServerService.updateFinance(
+      const finance = await this.jsonServerService.getFinance(
+        subMember.financeId,
+      );
+      if (!finance) {
+        return {
+          success: false,
+          message: 'Finance record not found',
+          data: null,
+        };
+      }
+
+      if (allowance <= finance.totalSpent) {
+        return {
+          success: false,
+          message: `New allowance (${allowance}) must be greater than total spent (${finance.totalSpent}).`,
+          data: null,
+        };
+      }
+
+      const updatedFinance = await this.jsonServerService.updateFinance(
         subMember.financeId,
         { totalAllowance: allowance },
       );
@@ -246,13 +273,14 @@ export class SubMemberService {
       return {
         success: true,
         message: 'New Allowance Set!',
-        data: { finance },
+        data: { finance: updatedFinance },
       };
     } catch (error: any) {
-      if (error instanceof BadRequestException) {
-        throw error;
-      }
-      throw new InternalServerErrorException(error.message);
+      return {
+        success: false,
+        message: error.message ?? 'Internal Server Error',
+        data: null,
+      };
     }
   }
 
@@ -631,99 +659,99 @@ export class SubMemberService {
   }
 }
 
-    /**
-     * Get dashboard view with total spent amount for specified view period
-     */
-    // async getDashboardView(req: any, view?: string) {
-    //   try {
-    //     const user = req.user;
-    //     const userId = String(user.id);
-    //     const currentClubId = String(user.currently_at);
-  
-    //     // Get all transactions for this sub-member
-    //     const { data: transactionsData } = await this.transactionService.findAllForSubMember(req);
-    //     const allTransactions = transactionsData?.transactions || [];
-  
-    //     // Filter transactions by current club
-    //     const filteredTransactions = allTransactions.filter((tx: any) =>
-    //       String(tx.clubId) === currentClubId
-    //     );
-  
-    //     // Apply time period filtering
-    //     const { filteredTransactions: timeFilteredTransactions, periodInfo } = this.filterTransactionsByPeriod(filteredTransactions, view);
-  
-    //     // Calculate total spent amount
-    //     const totalSpent = timeFilteredTransactions.reduce((sum, tx) =>
-    //       sum + (Number(tx.bill) || 0), 0
-    //     );
-  
-    //     return {
-    //       success: true,
-    //       message: 'Dashboard view retrieved successfully',
-    //       data: {
-    //         view: periodInfo.name,
-    //         period: periodInfo,
-    //         totalSpent: totalSpent,
-    //         transactionCount: timeFilteredTransactions.length,
-    //         userRole: 'submember'
-    //       }
-    //     };
-    //   } catch (error) {
-    //     throw new InternalServerErrorException(error.message);
-    //   }
-    // }
-    // /**
-    //  * Filter transactions by time period
-    //  */
-    // private filterTransactionsByPeriod(transactions: any[], period?: string) {
-    //   const now = new Date();
-    //   let startDate: Date;
-    //   let periodInfo: { name: string; startDate: string; endDate: string };
-  
-    //   switch (period?.toLowerCase()) {
-    //     case 'daily':
-    //       startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-    //       periodInfo = {
-    //         name: 'Daily',
-    //         startDate: startDate.toISOString().split('T')[0],
-    //         endDate: now.toISOString().split('T')[0]
-    //       };
-    //       break;
-    //     case 'weekly':
-    //       const dayOfWeek = now.getDay();
-    //       startDate = new Date(now);
-    //       startDate.setDate(now.getDate() - dayOfWeek);
-    //       startDate.setHours(0, 0, 0, 0);
-    //       periodInfo = {
-    //         name: 'Weekly',
-    //         startDate: startDate.toISOString().split('T')[0],
-    //         endDate: now.toISOString().split('T')[0]
-    //       };
-    //       break;
-    //     case 'monthly':
-    //       startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-    //       periodInfo = {
-    //         name: 'Monthly',
-    //         startDate: startDate.toISOString().split('T')[0],
-    //         endDate: now.toISOString().split('T')[0]
-    //       };
-    //       break;
-    //     default:
-    //       // All time - no filtering
-    //       periodInfo = {
-    //         name: 'All Time',
-    //         startDate: 'N/A',
-    //         endDate: now.toISOString().split('T')[0]
-    //       };
-    //       return { filteredTransactions: transactions, periodInfo };
-    //   }
-  
-    //     const filteredTransactions = transactions.filter(tx => {
-    //       const dateString = tx.createdAt || tx.date || tx.updatedAt;
-    //       if (!dateString) return false;
-    //       const txDate = new Date(dateString);
-    //       return txDate >= startDate && txDate <= now;
-    //     });
-  
-    //     return { filteredTransactions, periodInfo };
-    //   }
+/**
+ * Get dashboard view with total spent amount for specified view period
+ */
+// async getDashboardView(req: any, view?: string) {
+//   try {
+//     const user = req.user;
+//     const userId = String(user.id);
+//     const currentClubId = String(user.currently_at);
+
+//     // Get all transactions for this sub-member
+//     const { data: transactionsData } = await this.transactionService.findAllForSubMember(req);
+//     const allTransactions = transactionsData?.transactions || [];
+
+//     // Filter transactions by current club
+//     const filteredTransactions = allTransactions.filter((tx: any) =>
+//       String(tx.clubId) === currentClubId
+//     );
+
+//     // Apply time period filtering
+//     const { filteredTransactions: timeFilteredTransactions, periodInfo } = this.filterTransactionsByPeriod(filteredTransactions, view);
+
+//     // Calculate total spent amount
+//     const totalSpent = timeFilteredTransactions.reduce((sum, tx) =>
+//       sum + (Number(tx.bill) || 0), 0
+//     );
+
+//     return {
+//       success: true,
+//       message: 'Dashboard view retrieved successfully',
+//       data: {
+//         view: periodInfo.name,
+//         period: periodInfo,
+//         totalSpent: totalSpent,
+//         transactionCount: timeFilteredTransactions.length,
+//         userRole: 'submember'
+//       }
+//     };
+//   } catch (error) {
+//     throw new InternalServerErrorException(error.message);
+//   }
+// }
+// /**
+//  * Filter transactions by time period
+//  */
+// private filterTransactionsByPeriod(transactions: any[], period?: string) {
+//   const now = new Date();
+//   let startDate: Date;
+//   let periodInfo: { name: string; startDate: string; endDate: string };
+
+//   switch (period?.toLowerCase()) {
+//     case 'daily':
+//       startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+//       periodInfo = {
+//         name: 'Daily',
+//         startDate: startDate.toISOString().split('T')[0],
+//         endDate: now.toISOString().split('T')[0]
+//       };
+//       break;
+//     case 'weekly':
+//       const dayOfWeek = now.getDay();
+//       startDate = new Date(now);
+//       startDate.setDate(now.getDate() - dayOfWeek);
+//       startDate.setHours(0, 0, 0, 0);
+//       periodInfo = {
+//         name: 'Weekly',
+//         startDate: startDate.toISOString().split('T')[0],
+//         endDate: now.toISOString().split('T')[0]
+//       };
+//       break;
+//     case 'monthly':
+//       startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+//       periodInfo = {
+//         name: 'Monthly',
+//         startDate: startDate.toISOString().split('T')[0],
+//         endDate: now.toISOString().split('T')[0]
+//       };
+//       break;
+//     default:
+//       // All time - no filtering
+//       periodInfo = {
+//         name: 'All Time',
+//         startDate: 'N/A',
+//         endDate: now.toISOString().split('T')[0]
+//       };
+//       return { filteredTransactions: transactions, periodInfo };
+//   }
+
+//     const filteredTransactions = transactions.filter(tx => {
+//       const dateString = tx.createdAt || tx.date || tx.updatedAt;
+//       if (!dateString) return false;
+//       const txDate = new Date(dateString);
+//       return txDate >= startDate && txDate <= now;
+//     });
+
+//     return { filteredTransactions, periodInfo };
+//   }
