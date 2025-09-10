@@ -28,12 +28,12 @@ export class EovController {
    * - Query params: period (daily|weekly|monthly)
    * - Uses JWT user (req.user.id) from AuthGuard
    */
-  @UseGuards(AuthGuard)
+   @UseGuards(AuthGuard)
   @Get('export-pdf')
   async exportPdf(
     @Req() req: any,
     @Query('period') period?: string
-  ): Promise<StreamableFile> {
+  ): Promise<{ success: boolean; link?: string; message?: string }> {
     const userId = String(req.user?.id);
     return this.eovService.fetchAndGenerateReport(userId, period);
   }
