@@ -122,7 +122,7 @@ export class SubMemberService {
       // Create user_clubs entries for the sub-member for each club the member belongs to
       const userClubPromises = memberClubs.map((memberClub) =>
         this.jsonServerService.createUserClub({
-          userId: subMember.id,
+          userId: subMember.userId,
           clubId: memberClub.clubId,
           billingCycle: createSubMemberDto.BillingCycle, // Use sub-member's billing cycle
           parentMemberId: user.id, // Parent member ID
@@ -132,6 +132,7 @@ export class SubMemberService {
 
       // Wait for all user_clubs entries to be created
       await Promise.all(userClubPromises);
+
 
       const invitationCode = generateInvitationCode();
       // Set expiry date to 7 days from now
