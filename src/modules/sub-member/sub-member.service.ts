@@ -272,9 +272,7 @@ export class SubMemberService {
 
       // Fetch everything we need in parallel
       const [clubs, transactions, finance, clubDetails] = await Promise.all([
-        // If the UI should show the PARENT member's clubs (as your comment suggests), use parentMemberId.
-        // If you actually want the sub-member's clubs, replace parentMemberId ?? userId with userId.
-        this.jsonServerService.getClubsForUser(parentMemberId ?? userId),
+        this.jsonServerService.getClubsForUser(userId),
         this.jsonServerService.getTransactions({
           userId,
           clubId: currentClubId,

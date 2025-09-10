@@ -33,7 +33,7 @@ export class SubMemberController {
     return this.subMemberService.editAllowance(id, body.allowance);
   }
   @Get('get-subdashboard/:id')
-  // @UseGuards(AuthGuard)
+  @UseGuards(AuthGuard)
   getsubDashboard(@Param('id') id:string) {
     return this.subMemberService.getsubDashboard(id);
   }
