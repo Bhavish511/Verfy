@@ -62,15 +62,19 @@ export class MemberService {
       const nameOf = (uid: string | number) =>
         userById.get(String(uid))?.fullname || 'Unknown';
 
-      // ✅ Calculate totals (sum over all clubs for parent + subs)
-      const relevantClubs = allUserClubs.filter((uc) =>
-        allowedUserIds.has(String(uc.userId)),
+      // Clubs for parent + subs, filtered to only current club
+      const relevantClubs = allUserClubs.filter(
+        (uc) =>
+          allowedUserIds.has(String(uc.userId)) &&
+          String(uc.clubId) === currentClubId,
       );
 
+      // Totals for just this club
       const totalSpent = relevantClubs.reduce(
         (sum, uc) => sum + (Number(uc.totalSpent) || 0),
         0,
       );
+
       const totalAllowance = relevantClubs.reduce(
         (sum, uc) => sum + (Number(uc.totalAllowance) || 0),
         0,
@@ -144,52 +148,53 @@ export class MemberService {
   }
 
   async switchClub(clubId: string, req) {
-  try {
-    const user = req.user;
-    const userId = String(user.id);
+    try {
+      const user = req.user;
+      const userId = String(user.id);
 
-    // Fetch all clubs this user belongs to
-    const memberClubs = await this.jsonServerService.getClubsFormember(userId);
+      // Fetch all clubs this user belongs to
+      const memberClubs =
+        await this.jsonServerService.getClubsFormember(userId);
 
-    // Find the club object that matches
-    const targetClub = memberClubs.find(
-      (club: any) => String(club.clubId) === String(clubId),
-    );
+      // Find the club object that matches
+      const targetClub = memberClubs.find(
+        (club: any) => String(club.clubId) === String(clubId),
+      );
 
-    if (!targetClub) {
+      if (!targetClub) {
+        return {
+          success: false,
+          message: 'You are not a member of this club',
+          data: null,
+        };
+      }
+
+      // Update user's current club
+      const updatedUser = await this.jsonServerService.updateUser(userId, {
+        currently_at: clubId,
+      });
+
+      return {
+        success: true,
+        message: 'Club switched successfully',
+        data: {
+          currentClub: {
+            id: targetClub.clubId,
+            name: targetClub.name,
+            location: targetClub.location,
+          },
+          user: updatedUser,
+        },
+      };
+    } catch (error) {
       return {
         success: false,
-        message: 'You are not a member of this club',
+        message: 'Failed to switch club',
         data: null,
+        error: error.message,
       };
     }
-
-    // Update user's current club
-    const updatedUser = await this.jsonServerService.updateUser(userId, {
-      currently_at: clubId,
-    });
-
-    return {
-      success: true,
-      message: 'Club switched successfully',
-      data: {
-        currentClub: {
-          id: targetClub.clubId,
-          name: targetClub.name,
-          location: targetClub.location,
-        },
-        user: updatedUser,
-      },
-    };
-  } catch (error) {
-    return {
-      success: false,
-      message: 'Failed to switch club',
-      data: null,
-      error: error.message,
-    };
   }
-}
   /**
    * Member summary (includes sub-members implicitly via transaction.memberId === member.id)
    * - Fetches by { memberId, clubId }
