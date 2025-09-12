@@ -439,9 +439,11 @@ export class JsonServerService {
 
   // Helper method to get clubs for a specific member or sub-member
   async getClubsForUser(userId: string | number): Promise<any[]> {
+    return this.findAll('user_clubs', { parentMemberId: userId, userId:userId});
+  }
+  async getClubsFormember(userId: string | number): Promise<any[]> {
     return this.findAll('user_clubs', { userId: userId });
   }
-
   // Helper method to get clubs for a parent member (including sub-members)
   async getClubsForParentMember(parentMemberId: string | number): Promise<any[]> {
     return this.findAll('user_clubs', { parentMemberId: parentMemberId });

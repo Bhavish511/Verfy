@@ -63,8 +63,6 @@ type FlagCharge = {
 
 @Injectable()
 export class EovService {
-  private readonly api = 'http://localhost:3001';
-
   constructor(
     private readonly http: HttpService,
     private readonly jsonServerService: JsonServerService,

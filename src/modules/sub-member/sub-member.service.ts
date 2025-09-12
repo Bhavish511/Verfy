@@ -93,48 +93,60 @@ export class SubMemberService {
   }
   async createSubMember(createSubMemberDto: CreateSubMemberDto, req) {
     try {
-      console.log(req.user.email);
-      console.log(createSubMemberDto.email);
+      const parent = req.user;
 
+      console.log('Parent:', parent.email);
+      console.log('Sub-member email:', createSubMemberDto.email);
+
+      // 1. Check if user already exists
       const users = await this.jsonServerService.getUsers({
         email: createSubMemberDto.email,
       });
-      if (users && users.length > 0)
+      if (users && users.length > 0) {
         throw new BadRequestException('User Already Exist!');
+      }
 
-      const user = req.user;
+      // 2. Create finance for sub-member
       const finance = await this.jsonServerService.createFinance({
         totalAllowance: createSubMemberDto.allowance,
         totalSpent: 0,
       });
 
+      // 3. Create sub-member
       const subMember = await this.jsonServerService.createUser({
         ...createSubMemberDto,
         ...this.fields,
-        parentId: user.id,
+        parentId: parent.id,
         financeId: finance.id,
-        currently_at: user.currently_at,
+        currently_at: parent.currently_at,
       });
 
-      // Get all clubs that the member belongs to
-      const memberClubs = await this.jsonServerService.getClubsForUser(user.id);
+      // 4. Get clubs parent belongs to
+      let memberClubs = await this.jsonServerService.getClubsFormember(
+        parent.id,
+      );
+      console.log(memberClubs);
 
-      // Create user_clubs entries for the sub-member for each club the member belongs to
-      const userClubPromises = memberClubs.map((memberClub) =>
+      if (!memberClubs || memberClubs.length === 0) {
+        throw new BadRequestException('Parent does not belong to any clubs');
+      }
+      const clubids = [...new Set(memberClubs.map(club => club.clubId))];
+      console.log(clubids);
+    
+      const userClubPromises = clubids.map((clubId) =>
         this.jsonServerService.createUserClub({
-          userId: subMember.id,
-          clubId: memberClub.clubId,
-          billingCycle: createSubMemberDto.BillingCycle, // Use sub-member's billing cycle
-          memberId: user.id, // Parent member ID
-          totalAllowance: createSubMemberDto.allowance, // Use sub-member's allowance
+          userId: subMember.id, // ✅ sub-member only
+          clubId, // ✅ direct value from array
+          billingCycle: createSubMemberDto.BillingCycle,
+          memberId: parent.id, // ✅ link sub to parent
+          totalAllowance: createSubMemberDto.allowance,
         }),
       );
 
-      // Wait for all user_clubs entries to be created
       await Promise.all(userClubPromises);
 
+      // 6. Generate invitation code
       const invitationCode = generateInvitationCode();
-      // Set expiry date to 7 days from now
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + 7);
 
@@ -142,23 +154,92 @@ export class SubMemberService {
         await this.jsonServerService.createInvitationCode({
           invitationCode,
           subMemberId: subMember.id,
-          memberId: user.id,
+          memberId: parent.id,
           status: 'active',
           expiresAt: expiresAt.toISOString(),
         });
 
+      // 7. Auto-create 2 default transactions PER CLUB
+      const allowance = createSubMemberDto.allowance;
+
+      if (allowance <= 0) {
+        throw new BadRequestException('Allowance must be greater than zero');
+      }
+
+      // Get categories
+      const categories = await this.transactionService.getCategories(req);
+      if (!categories || categories.data.length < 2) {
+        throw new BadRequestException('Not enough categories available');
+      }
+
+      // Pick 2 unique random categories
+      const shuffled = [...categories.data].sort(() => 0.5 - Math.random());
+      const uniqueCategories = Array.from(new Set(shuffled)).slice(0, 2);
+      if (uniqueCategories.length < 2) {
+        throw new BadRequestException('Not enough unique categories available');
+      }
+
+      const transaction1Bill = Math.floor(allowance * 0.3);
+      const transaction2Bill = Math.floor(allowance * 0.2);
+
+      // ✅ Create 2 transactions for EACH club
+      const transactionPromises = clubids.flatMap((clubId) => [
+        this.jsonServerService.createTransaction({
+          clubId,
+          userId: subMember.id,
+          memberId: parent.id,
+          bill: transaction1Bill,
+          category: uniqueCategories[0],
+          description: uniqueCategories[0],
+          status: 'pending',
+          verifyCharge: false,
+          flagChargeId: false,
+          date: new Date().toISOString(),
+          createdAt: new Date().toISOString(),
+        }),
+        this.jsonServerService.createTransaction({
+          clubId,
+          userId: subMember.id,
+          memberId: parent.id,
+          bill: transaction2Bill,
+          category: uniqueCategories[1],
+          description: uniqueCategories[1],
+          status: 'pending',
+          verifyCharge: false,
+          flagChargeId: false,
+          date: new Date().toISOString(),
+        }),
+      ]);
+
+      const createdTransactions = await Promise.all(transactionPromises);
+
+      // 8. ✅ Update finance.totalSpent (for all clubs)
+      const totalSpent =
+        (transaction1Bill + transaction2Bill);
+
+      await this.jsonServerService.updateFinance(finance.id, {
+        totalSpent,
+      });
+
+      // 9. Success response
       return {
         success: true,
         message:
-          'Sub Member created successfully and added to all member clubs!',
+          'Sub Member created successfully with default transactions and added to all member clubs!',
         data: {
           subMember,
           invitationCode: invitationCodeData.invitationCode,
           expiresAt: invitationCodeData.expiresAt,
           clubsAdded: memberClubs.length,
+          defaultTransactions: createdTransactions.length,
+          finance: {
+            totalAllowance: allowance,
+            totalSpent,
+          },
         },
       };
     } catch (error) {
+      console.error('Error creating sub-member:', error);
       return {
         success: false,
         message: 'Failed to create sub-member',
