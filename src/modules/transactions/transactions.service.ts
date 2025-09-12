@@ -4,8 +4,6 @@ import {
   InternalServerErrorException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { HttpService } from '@nestjs/axios';
-import { firstValueFrom } from 'rxjs';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { JsonServerService } from '../../services/json-server.service';
 type Tx = {
@@ -164,7 +162,7 @@ export class TransactionsService {
 //   }
 // }
   
-  async  findAllForMember(req) {
+  async findAllForMember(req) {
   try {
     if (!req?.user) throw new Error('Unauthorized');
 

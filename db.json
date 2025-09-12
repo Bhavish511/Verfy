@@ -1714,6 +1714,86 @@
       "billingCycle": "Monthly",
       "parentMemberId": "110",
       "totalAllowance": 5000
+    },
+    {
+      "id": "uc-111",
+      "userId": "101",
+      "clubId": "2",
+      "billingCycle": "Monthly",
+      "parentMemberId": "101",
+      "totalAllowance": 5000
+    },
+    {
+      "id": "uc-112",
+      "userId": "102",
+      "clubId": "2",
+      "billingCycle": "Monthly",
+      "parentMemberId": "102",
+      "totalAllowance": 6000
+    },
+    {
+      "id": "uc-113",
+      "userId": "103",
+      "clubId": "1",
+      "billingCycle": "Monthly",
+      "parentMemberId": "103",
+      "totalAllowance": 4500
+    },
+    {
+      "id": "uc-114",
+      "userId": "104",
+      "clubId": "1",
+      "billingCycle": "Monthly",
+      "parentMemberId": "104",
+      "totalAllowance": 7000
+    },
+    {
+      "id": "uc-115",
+      "userId": "105",
+      "clubId": "2",
+      "billingCycle": "Monthly",
+      "parentMemberId": "105",
+      "totalAllowance": 5500
+    },
+    {
+      "id": "uc-116",
+      "userId": "106",
+      "clubId": "1",
+      "billingCycle": "Monthly",
+      "parentMemberId": "106",
+      "totalAllowance": 8000
+    },
+    {
+      "id": "uc-117",
+      "userId": "107",
+      "clubId": "2",
+      "billingCycle": "Monthly",
+      "parentMemberId": "107",
+      "totalAllowance": 4000
+    },
+    {
+      "id": "uc-118",
+      "userId": "108",
+      "clubId": "1",
+      "billingCycle": "Monthly",
+      "parentMemberId": "108",
+      "totalAllowance": 9000
+    },
+    {
+      "id": "uc-119",
+      "userId": "109",
+      "clubId": "2",
+      "billingCycle": "Monthly",
+      "parentMemberId": "109",
+      "totalAllowance": 10000
+    },
+    {
+      "id": "uc-120",
+      "userId": "110",
+      "clubId": "1",
+      "billingCycle": "Monthly",
+      "parentMemberId": "110",
+      "totalAllowance": 5000
     }
   ]
 }

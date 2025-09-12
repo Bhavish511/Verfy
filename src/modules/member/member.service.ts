@@ -19,13 +19,27 @@ export class MemberService {
     const currentClubId = String(req.user.currently_at);
 
     // Pull everything in parallel
-    const [clubs, { data: transactionsData }, { data: finance }, allUsers] = await Promise.all([
-      this.jsonServerService.getClubs({ userId }),
+    const [allUserClubs, { data: transactionsData }, { data: finance }, allUsers] = await Promise.all([
+      this.jsonServerService.getUserClubs({ parentMemberId:userId }),
       this.transactionService.findAllForMember(req), // already filtered to current club + allowed users
       this.financeService.findExpenses(req),
       this.jsonServerService.getUsers(),
     ]);
+    const userClubs = allUserClubs.filter(
+    (uc) => uc.userId === uc.parentMemberId
+    );
+    // Extract unique clubIds
+    const parentClubIds = [...new Set(userClubs.map((uc) => uc.clubId))];
+    // console.log("parentClubIds ",parentClubIds);
+    
+    // Fetch club details for those IDs
+    const clubs = (
+    await Promise.all(
+      parentClubIds.map((id) => this.jsonServerService.getClubs({ id }))
+    )).flat();
 
+    // console.log("clubs ",clubs);
+    
     // Build helpers
     const subMembers = allUsers.filter(
       (u: any) => String(u.parentId) === userId && u.roles === 'submember'
