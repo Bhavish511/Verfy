@@ -3,6 +3,7 @@
 /node_modules
 /build
 db1.json
+previousdb.json
 # Logs
 logs
 *.log

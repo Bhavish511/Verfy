@@ -58,45 +58,69 @@ export class TransactionsService {
     }
   }
 
-  async create({ category, bill }: CreateTransactionDto, id: number, req) {
-    try {
-      const userId = req.user.id;
-      const user = await this.jsonServerService.getUser(userId);
-      const finance = await this.jsonServerService.getFinance(user.financeId);
-      
-      if (finance.totalSpent + bill > finance.totalAllowance)
-        throw new BadRequestException('Total Amount Exceeded!');
-        
-      const expense = await this.jsonServerService.createDailyExpense({
-        createdAt: Date.now(),
-        money_spent: bill,
-        userId,
-      });
-      
-      
-      const newFinance = await this.jsonServerService.updateFinance(user.financeId, {
-        totalSpent: finance.totalSpent + bill,
-        category,
-      });
-      
-      const transaction = await this.jsonServerService.createTransaction({
-        clubId: id,
-        bill: bill,
-        userId: 1,
-        category: category,
-        status: 'pending',
-        verifyCharge: false,
-        flagChargeId: null,
-      });
-      
-      return {
-        success: true,
-        data: { expense, finance: newFinance, transaction },
-      };
-    } catch (error) {
-      throw new InternalServerErrorException(error.message);
+  async create(
+  { category, bill }: CreateTransactionDto,
+  clubId: string | number,
+  req
+) {
+  try {
+    const userId = String(req.user.id);
+
+    // 1. Find the user_club for this user + club
+    const [userClub] = await this.jsonServerService.getUserClubs({
+      userId,
+      clubId: String(clubId),
+    });
+    console.log(userClub);
+    
+    if (!userClub) {
+      throw new BadRequestException("User is not a member of this club");
     }
+
+    // 2. Validate allowance
+    if ((userClub.totalSpent || 0) + bill > userClub.totalAllowance) {
+      throw new BadRequestException("Total Allowance Exceeded!");
+    }
+
+    // 3. Create transaction (jsonServerService.createTransaction will auto-update totalSpent now)
+    const transaction = await this.jsonServerService.createTransaction({
+      clubId: String(clubId),
+      bill,
+      userId,
+      memberId: req.user.parentId || userId, // ✅ if submember, link to parent
+      category,
+      status: "pending",
+      verifyCharge: false,
+      flagChargeId: null,
+      date: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+    });
+    const updatedUserClub = await this.jsonServerService.updateUserClub(
+      userClub.id,
+      {
+        totalSpent: (userClub.totalSpent || 0) + bill,
+      }
+    );
+
+    
+
+    // 4. Optional: also log daily expense (if still required)
+    const expense = await this.jsonServerService.createDailyExpense({
+      createdAt: Date.now(),
+      money_spent: bill,
+      userId,
+    });
+
+    return {
+      success: true,
+      message: "Transaction created successfully",
+      data: { expense, userClub, transaction },
+    };
+  } catch (error) {
+    throw new InternalServerErrorException(error.message);
   }
+}
+
 
   async findAllForSubMember(req) {
     try {

@@ -6,7 +6,6 @@ import { SubMemberModule } from './modules/sub-member/sub-member.module';
 import { TransactionsModule } from './modules/transactions/transactions.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { ClubsModule } from './modules/clubs/clubs.module';
-import { FinanceModule } from './modules/finance/finance.module';
 import { HttpModule } from '@nestjs/axios';
 import { ExpensesModule } from './modules/expenses/expenses.module';
 import { FlagChargeModule } from './modules/flag-charge/flag-charge.module';
@@ -24,7 +23,6 @@ import { JsonServerModule } from './modules/json-server/json-server.module';
     TransactionsModule,
     AuthModule,
     ClubsModule,
-    FinanceModule,
     ExpensesModule,
     FlagChargeModule,
     EmailModule,

@@ -6,13 +6,8 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { UpdateSubMemberDto } from './dto/update-sub-member.dto';
-import { HttpService } from '@nestjs/axios';
-import { firstValueFrom } from 'rxjs';
 import { CreateSubMemberDto } from './dto/create-sub-member.dto';
-import { customAlphabet } from 'nanoid';
 import { generateInvitationCode } from 'src/utils/createGenerationCode';
-import { AxiosError } from 'axios';
 import { JsonServerService } from '../../services/json-server.service';
 import { TransactionsService } from '../transactions/transactions.service';
 
@@ -27,7 +22,6 @@ type InvitationCodeRow = {
 @Injectable()
 export class SubMemberService {
   constructor(
-    private readonly httpService: HttpService,
     private readonly jsonServerService: JsonServerService,
     private readonly transactionService: TransactionsService,
   ) {}
@@ -41,8 +35,7 @@ export class SubMemberService {
     // allowance: null,
     // totalSpent: null,
     // BillingCycle: null,
-    financeId: null,
-    currently_at: null,
+    // currently_at: null,
     roles: 'submember',
   };
 
@@ -52,15 +45,17 @@ export class SubMemberService {
       const userId = String(user.id);
 
       // Verify the member belongs to this club
-      const clubs = await this.jsonServerService.getUserClubs({ userId });
-      const targetClub = clubs.find(
-        (club: any) => String(club.clubId) === String(clubId),
+      let memberClubs = await this.jsonServerService.getClubsFormember(userId);
+      const clubids = [...new Set(memberClubs.map((club) => club.clubId))];
+
+      const targetClub = clubids.find(
+        (club: any) => String(club.id) === String(clubId),
       );
 
       if (!targetClub) {
         return {
           success: false,
-          message: 'You are not a submember of this club',
+          message: 'You are not a member of this club',
           data: null,
         };
       }
@@ -106,46 +101,39 @@ export class SubMemberService {
         throw new BadRequestException('User Already Exist!');
       }
 
-      // 2. Create finance for sub-member
-      const finance = await this.jsonServerService.createFinance({
-        totalAllowance: createSubMemberDto.allowance,
-        totalSpent: 0,
-      });
-
-      // 3. Create sub-member
+      // 2. Create sub-member (no financeId now)
       const subMember = await this.jsonServerService.createUser({
         ...createSubMemberDto,
         ...this.fields,
         parentId: parent.id,
-        financeId: finance.id,
         currently_at: parent.currently_at,
+        roles: 'submember',
       });
 
-      // 4. Get clubs parent belongs to
-      let memberClubs = await this.jsonServerService.getClubsFormember(
+      // 3. Get clubs parent belongs to
+      const memberClubs = await this.jsonServerService.getClubsFormember(
         parent.id,
       );
-      console.log(memberClubs);
-
       if (!memberClubs || memberClubs.length === 0) {
         throw new BadRequestException('Parent does not belong to any clubs');
       }
-      const clubids = [...new Set(memberClubs.map(club => club.clubId))];
-      console.log(clubids);
-    
+      const clubids = [...new Set(memberClubs.map((club) => club.clubId))];
+
+      // 4. Create user_clubs for sub-member (with allowance + spent = 0)
       const userClubPromises = clubids.map((clubId) =>
         this.jsonServerService.createUserClub({
-          userId: subMember.id, // ✅ sub-member only
-          clubId, // ✅ direct value from array
+          userId: subMember.id,
+          clubId,
           billingCycle: createSubMemberDto.BillingCycle,
-          memberId: parent.id, // ✅ link sub to parent
+          memberId: parent.id,
           totalAllowance: createSubMemberDto.allowance,
+          totalSpent: 0, // start at 0
         }),
       );
 
       await Promise.all(userClubPromises);
 
-      // 6. Generate invitation code
+      // 5. Generate invitation code
       const invitationCode = generateInvitationCode();
       const expiresAt = new Date();
       expiresAt.setDate(expiresAt.getDate() + 7);
@@ -159,69 +147,68 @@ export class SubMemberService {
           expiresAt: expiresAt.toISOString(),
         });
 
-      // 7. Auto-create 2 default transactions PER CLUB
+      // 6. Auto-create 2 default transactions PER CLUB
       const allowance = createSubMemberDto.allowance;
-
       if (allowance <= 0) {
         throw new BadRequestException('Allowance must be greater than zero');
       }
 
-      // Get categories
       const categories = await this.transactionService.getCategories(req);
       if (!categories || categories.data.length < 2) {
         throw new BadRequestException('Not enough categories available');
       }
 
-      // Pick 2 unique random categories
       const shuffled = [...categories.data].sort(() => 0.5 - Math.random());
       const uniqueCategories = Array.from(new Set(shuffled)).slice(0, 2);
-      if (uniqueCategories.length < 2) {
-        throw new BadRequestException('Not enough unique categories available');
-      }
 
       const transaction1Bill = Math.floor(allowance * 0.3);
       const transaction2Bill = Math.floor(allowance * 0.2);
 
-      // ✅ Create 2 transactions for EACH club
-      const transactionPromises = clubids.flatMap((clubId) => [
-        this.jsonServerService.createTransaction({
-          clubId,
+      for (const clubId of clubids) {
+        // Create 2 default transactions
+        await Promise.all([
+          this.jsonServerService.createTransaction({
+            clubId,
+            userId: subMember.id,
+            memberId: parent.id,
+            bill: transaction1Bill,
+            category: uniqueCategories[0],
+            description: uniqueCategories[0],
+            status: 'pending',
+            verifyCharge: false,
+            flagChargeId: false,
+            date: new Date().toISOString(),
+            createdAt: new Date().toISOString(),
+          }),
+          this.jsonServerService.createTransaction({
+            clubId,
+            userId: subMember.id,
+            memberId: parent.id,
+            bill: transaction2Bill,
+            category: uniqueCategories[1],
+            description: uniqueCategories[1],
+            status: 'pending',
+            verifyCharge: false,
+            flagChargeId: false,
+            date: new Date().toISOString(),
+          }),
+        ]);
+
+        // 🔥 Update user_clubs totalSpent for this club
+        const [userClub] = await this.jsonServerService.getUserClubs({
           userId: subMember.id,
-          memberId: parent.id,
-          bill: transaction1Bill,
-          category: uniqueCategories[0],
-          description: uniqueCategories[0],
-          status: 'pending',
-          verifyCharge: false,
-          flagChargeId: false,
-          date: new Date().toISOString(),
-          createdAt: new Date().toISOString(),
-        }),
-        this.jsonServerService.createTransaction({
           clubId,
-          userId: subMember.id,
-          memberId: parent.id,
-          bill: transaction2Bill,
-          category: uniqueCategories[1],
-          description: uniqueCategories[1],
-          status: 'pending',
-          verifyCharge: false,
-          flagChargeId: false,
-          date: new Date().toISOString(),
-        }),
-      ]);
+        });
 
-      const createdTransactions = await Promise.all(transactionPromises);
+        if (userClub) {
+          await this.jsonServerService.updateUserClub(userClub.id, {
+            totalSpent:
+              (userClub.totalSpent || 0) + transaction1Bill + transaction2Bill,
+          });
+        }
+      }
 
-      // 8. ✅ Update finance.totalSpent (for all clubs)
-      const totalSpent =
-        (transaction1Bill + transaction2Bill);
-
-      await this.jsonServerService.updateFinance(finance.id, {
-        totalSpent,
-      });
-
-      // 9. Success response
+      // 7. Success response
       return {
         success: true,
         message:
@@ -231,11 +218,6 @@ export class SubMemberService {
           invitationCode: invitationCodeData.invitationCode,
           expiresAt: invitationCodeData.expiresAt,
           clubsAdded: memberClubs.length,
-          defaultTransactions: createdTransactions.length,
-          finance: {
-            totalAllowance: allowance,
-            totalSpent,
-          },
         },
       };
     } catch (error) {
@@ -308,9 +290,10 @@ export class SubMemberService {
     }
   }
 
-  async editAllowance(id: string, allowance: number) {
+  async editAllowance(userId: string, allowance: number) {
     try {
-      const subMember = await this.jsonServerService.getUser(id);
+      // 1. Fetch sub-member
+      const subMember = await this.jsonServerService.getUser(userId);
       if (!subMember) {
         return {
           success: false,
@@ -319,6 +302,7 @@ export class SubMemberService {
         };
       }
 
+      // 2. Validate allowance
       if (allowance < 0) {
         return {
           success: false,
@@ -327,34 +311,39 @@ export class SubMemberService {
         };
       }
 
-      const finance = await this.jsonServerService.getFinance(
-        subMember.financeId,
-      );
-      if (!finance) {
+      // 3. Get sub-member’s club record
+      const [userClub] = await this.jsonServerService.getUserClubs({
+        userId: String(userId),
+        clubId: String(subMember.currently_at),
+      });
+
+      if (!userClub) {
         return {
           success: false,
-          message: 'Finance record not found',
+          message: 'User is not part of this club',
           data: null,
         };
       }
 
-      if (allowance <= finance.totalSpent) {
+      // 4. Check allowance against already spent
+      if (allowance <= (userClub.totalSpent || 0)) {
         return {
           success: false,
-          message: `New allowance (${allowance}) must be greater than total spent (${finance.totalSpent}).`,
+          message: `New allowance (${allowance}) must be greater than total spent (${userClub.totalSpent}).`,
           data: null,
         };
       }
 
-      const updatedFinance = await this.jsonServerService.updateFinance(
-        subMember.financeId,
+      // 5. Update user_club record
+      const updatedUserClub = await this.jsonServerService.updateUserClub(
+        userClub.id,
         { totalAllowance: allowance },
       );
 
       return {
         success: true,
         message: 'New Allowance Set!',
-        data: { finance: updatedFinance },
+        data: { userClub: updatedUserClub },
       };
     } catch (error: any) {
       return {
@@ -365,168 +354,165 @@ export class SubMemberService {
     }
   }
 
-  async getsubDashboard(id: string) {
-    try {
-      console.log(id);
+ async getsubDashboard(id: string) {
+  try {
+    // 1. Get sub-member
+    const user = await this.jsonServerService.getUser(id);
+    if (!user) throw new Error('Unauthorized');
 
-      const user = await this.jsonServerService.getUser(id); // sub-member
-      console.log();
+    const userId = String(user.id);
+    const parentMemberId =
+      user.parentId != null ? String(user.parentId) : null;
+    const currentClubId = String(user.currently_at);
 
-      if (!user) throw new Error('Unauthorized');
+    // 2. Fetch all needed data
+    const [userClubs, transactions, clubDetails] = await Promise.all([
+      this.jsonServerService.getUserClubs({
+        userId,
+        clubId: currentClubId,
+      }),
+      this.jsonServerService.getTransactions({
+        userId,
+        clubId: currentClubId,
+      }),
+      this.jsonServerService.getClub(currentClubId).catch(() => null),
+    ]);
 
-      const userId = String(user.id); // sub-member id
-      const parentMemberId =
-        user.parentId != null ? String(user.parentId) : null; // parent member id (owner)
-      const currentClubId = String(user.currently_at);
+    // 3. Get the user_club record (single, since sub-member belongs to currentClubId)
+    const [userClub] = userClubs || [];
 
-      // Fetch everything we need in parallel
-      const [clubs, transactions, finance, clubDetails] = await Promise.all([
-        this.jsonServerService.getClubsForUser(userId),
-        this.jsonServerService.getTransactions({
-          userId,
-          clubId: currentClubId,
-        }),
-        this.jsonServerService.getFinance(user.financeId),
-        this.jsonServerService.getClub(currentClubId).catch(() => null),
-      ]);
+    const totalSpent = Number(userClub?.totalSpent ?? 0);
+    const totalAllowance = Number(userClub?.totalAllowance ?? 0);
+    const remainingAllowance = totalAllowance - totalSpent;
 
-      // ===== Summary (from finance) =====
-      const totalSpent = Number(finance?.totalSpent ?? 0);
-      const totalAllowance = Number(finance?.totalAllowance ?? 0);
-      const remainingAllowance = totalAllowance - totalSpent;
+    // 4. Recent transactions (last 2)
+    const recent = (transactions || [])
+      .slice()
+      .sort(
+        (a: any, b: any) =>
+          new Date(b.createdAt || 0).getTime() -
+          new Date(a.createdAt || 0).getTime(),
+      )
+      .slice(0, 2);
 
-      // ===== 2 most recent transactions (for this sub-member, current club) =====
-      const recent = (transactions || [])
-        .slice()
-        .sort(
-          (a: any, b: any) =>
-            new Date(b.createdAt || 0).getTime() -
-            new Date(a.createdAt || 0).getTime(),
-        )
-        .slice(0, 2);
+    const twoRecentTransactions = recent.map((tx: any) => ({
+      transactionId: tx.id,
+      amount: Number(tx.bill ?? tx.amount ?? 0) || 0,
+      category: tx.category ?? null,
+      userName: user.fullname || 'Unknown',
+    }));
 
-      const twoRecentTransactions = recent.map((tx: any) => ({
-        transactionId: tx.id,
-        amount: Number(tx.bill ?? tx.amount ?? 0) || 0,
-        category: tx.category ?? null,
-        userName: user.fullname || 'Unknown',
-      }));
+    const transactionsWithDetails = recent.map((tx: any) => ({
+      ...tx,
+      clubName: clubDetails?.name || 'Unknown Club',
+      canVerify: false, // sub-members cannot verify
+      canFlag: true,    // sub-members can flag
+    }));
 
-      // Full objects for those same two (already filtered & sorted)
-      const transactionsWithDetails = recent.map((tx: any) => ({
-        ...tx,
-        clubName: clubDetails?.name || 'Unknown Club',
-        canVerify: false, // sub-members cannot verify
-        canFlag: true, // sub-members can flag
-      }));
-
-      return {
-        success: true,
-        message: 'Sub-member dashboard data retrieved successfully',
-        data: {
-          summary: { totalSpent, totalAllowance, remainingAllowance },
-          clubs,
-          twoRecentTransactions, // [{ transactionId, amount, category, userName }]
-          transactions: transactionsWithDetails, // full objects for those same IDs
-          finance,
-          user: {
-            id: user.id,
-            fullname: user.fullname,
-            email: user.email,
-            relation: user.relation,
-            allowance: Number(finance?.totalAllowance ?? 0),
-          },
+    return {
+      success: true,
+      message: 'Sub-member dashboard data retrieved successfully',
+      data: {
+        summary: { totalSpent, totalAllowance, remainingAllowance },
+        clubs: [clubDetails].filter(Boolean), // only current club
+        twoRecentTransactions,
+        transactions: transactionsWithDetails,
+        user: {
+          id: user.id,
+          fullname: user.fullname,
+          email: user.email,
+          relation: user.relation,
+          allowance: totalAllowance,
         },
-      };
-    } catch (error: any) {
-      return {
-        success: false,
-        message: 'Failed to retrieve sub-member dashboard data against member',
-        data: null,
-        error: error.message,
-      };
-    }
+      },
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: 'Failed to retrieve sub-member dashboard data against member',
+      data: null,
+      error: error.message,
+    };
   }
+}
+
   async getDashboard(req: { user: any }) {
-    try {
-      const user = req.user; // sub-member
-      if (!user) throw new Error('Unauthorized');
+  try {
+    const user = req.user; // could be sub-member or member
+    if (!user) throw new Error('Unauthorized');
 
-      const userId = String(user.id); // sub-member id
-      const parentMemberId =
-        user.parentId != null ? String(user.parentId) : null; // parent member id (owner)
-      const currentClubId = String(user.currently_at);
+    const userId = String(user.id);
+    const parentMemberId = user.parentId ? String(user.parentId) : userId;
+    const currentClubId = String(user.currently_at);
 
-      // Fetch everything we need in parallel
-      const [clubs, transactions, finance, clubDetails] = await Promise.all([
-        // If the UI should show the PARENT member's clubs (as your comment suggests), use parentMemberId.
-        // If you actually want the sub-member's clubs, replace parentMemberId ?? userId with userId.
-        this.jsonServerService.getClubsForUser(parentMemberId ?? userId),
-        this.jsonServerService.getTransactions({
-          userId,
-          clubId: currentClubId,
-        }),
-        this.jsonServerService.getFinance(user.financeId),
-        this.jsonServerService.getClub(currentClubId).catch(() => null),
-      ]);
+    // 1. Fetch everything in parallel
+    const [clubs, transactions, userClubRecords, clubDetails] = await Promise.all([
+      // parentMember’s clubs (if sub-member, show parent’s clubs)
+      this.jsonServerService.getClubsForUser(parentMemberId),
+      this.jsonServerService.getTransactions({ userId, clubId: currentClubId }),
+      this.jsonServerService.getUserClubs({ userId, clubId: currentClubId }),
+      this.jsonServerService.getClub(currentClubId).catch(() => null),
+    ]);
 
-      // ===== Summary (from finance) =====
-      const totalSpent = Number(finance?.totalSpent ?? 0);
-      const totalAllowance = Number(finance?.totalAllowance ?? 0);
-      const remainingAllowance = totalAllowance - totalSpent;
+    // 2. Get the user_club record for current club
+    const [userClub] = userClubRecords || [];
 
-      // ===== 2 most recent transactions (for this sub-member, current club) =====
-      const recent = (transactions || [])
-        .slice()
-        .sort(
-          (a: any, b: any) =>
-            new Date(b.createdAt || 0).getTime() -
-            new Date(a.createdAt || 0).getTime(),
-        )
-        .slice(0, 2);
+    const totalSpent = Number(userClub?.totalSpent ?? 0);
+    const totalAllowance = Number(userClub?.totalAllowance ?? 0);
+    const remainingAllowance = totalAllowance - totalSpent;
 
-      const twoRecentTransactions = recent.map((tx: any) => ({
-        transactionId: tx.id,
-        amount: Number(tx.bill ?? tx.amount ?? 0) || 0,
-        category: tx.category ?? null,
-        userName: user.fullname || 'Unknown',
-      }));
+    // 3. Get the 2 most recent transactions
+    const recent = (transactions || [])
+      .slice()
+      .sort(
+        (a: any, b: any) =>
+          new Date(b.createdAt || 0).getTime() -
+          new Date(a.createdAt || 0).getTime(),
+      )
+      .slice(0, 2);
 
-      // Full objects for those same two (already filtered & sorted)
-      const transactionsWithDetails = recent.map((tx: any) => ({
-        ...tx,
-        clubName: clubDetails?.name || 'Unknown Club',
-        canVerify: false, // sub-members cannot verify
-        canFlag: true, // sub-members can flag
-      }));
+    const twoRecentTransactions = recent.map((tx: any) => ({
+      transactionId: tx.id,
+      amount: Number(tx.bill ?? 0) || 0,
+      category: tx.category ?? null,
+      userName: user.fullname || 'Unknown',
+    }));
 
-      return {
-        success: true,
-        message: 'Sub-member dashboard data retrieved successfully',
-        data: {
-          summary: { totalSpent, totalAllowance, remainingAllowance },
-          clubs,
-          twoRecentTransactions, // [{ transactionId, amount, category, userName }]
-          transactions: transactionsWithDetails, // full objects for those same IDs
-          finance,
-          user: {
-            id: user.id,
-            fullname: user.fullname,
-            email: user.email,
-            relation: user.relation,
-            allowance: Number(finance?.totalAllowance ?? 0),
-          },
+    // Full objects with club info
+    const transactionsWithDetails = recent.map((tx: any) => ({
+      ...tx,
+      clubName: clubDetails?.name || 'Unknown Club',
+      canVerify: false, // sub-members cannot verify
+      canFlag: true,    // sub-members can flag
+    }));
+
+    return {
+      success: true,
+      message: 'Dashboard data retrieved successfully',
+      data: {
+        summary: { totalSpent, totalAllowance, remainingAllowance },
+        clubs,
+        twoRecentTransactions,
+        transactions: transactionsWithDetails,
+        user: {
+          id: user.id,
+          fullname: user.fullname,
+          email: user.email,
+          relation: user.relation,
+          allowance: totalAllowance,
         },
-      };
-    } catch (error: any) {
-      return {
-        success: false,
-        message: 'Failed to retrieve sub-member dashboard data',
-        data: null,
-        error: error.message,
-      };
-    }
+      },
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: 'Failed to retrieve dashboard data',
+      data: null,
+      error: error.message,
+    };
   }
+}
+
 
   // COMMENTED OUT: Sub-member club change functionality
   // Uncomment this method if you want sub-members to be able to change clubs
@@ -647,36 +633,42 @@ export class SubMemberService {
   }
 
   async getSubMemberDashboardSummary(req: any, period: string) {
-    const user = req.user;
-    if (!user) throw new Error('Unauthorized');
+  const user = req.user;
+  if (!user) throw new Error('Unauthorized');
 
-    const userId = String(user.id);
-    const currentClubId = String(user.currently_at);
+  const userId = String(user.id);
+  const currentClubId = String(user.currently_at);
 
-    const { startDate, endDate } = this.getPeriodDateRange(period);
+  const { startDate, endDate } = this.getPeriodDateRange(period);
 
-    const [transactions, finance] = await Promise.all([
-      this.jsonServerService.getTransactions({ userId, clubId: currentClubId }),
-      this.jsonServerService.getFinance(user.financeId),
-    ]);
+  // Fetch transactions + user_club for this sub-member in the current club
+  const [transactions, userClubs] = await Promise.all([
+    this.jsonServerService.getTransactions({ userId, clubId: currentClubId }),
+    this.jsonServerService.getUserClubs({ userId, clubId: currentClubId }),
+  ]);
 
-    const periodTx = (transactions ?? []).filter((tx: any) =>
-      this.isInPeriod(tx.createdAt, startDate, endDate),
-    );
+  // Transactions within the selected period
+  const periodTx = (transactions ?? []).filter((tx: any) =>
+    this.isInPeriod(tx.createdAt, startDate, endDate),
+  );
 
-    const totalSpent = this.calculateTotalSpent(periodTx);
-    const totalAllowance = Number(finance?.totalAllowance ?? 0);
-    const remainingAllowance = totalAllowance - totalSpent;
+  // Calculate totals
+  const totalSpent = this.calculateTotalSpent(periodTx);
+  const [userClub] = userClubs || [];
+  const totalAllowance = Number(userClub?.totalAllowance ?? 0);
+  const remainingAllowance = totalAllowance - totalSpent;
 
-    return {
-      success: true,
-      message: 'Dashboard summary fetched',
-      data: {
-        totalSpent,
-        // remainingAllowance,
-      },
-    };
-  }
+  return {
+    success: true,
+    message: 'Dashboard summary fetched',
+    data: {
+      totalSpent,
+      totalAllowance,
+      remainingAllowance,
+    },
+  };
+}
+
   private getPeriodDateRange(period: string): {
     startDate: Date;
     endDate: Date;

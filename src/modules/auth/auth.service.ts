@@ -39,7 +39,6 @@ export class AuthService {
   ) {}
 
   fields = {
-    financeId: null,
     currently_at: null,
     roles: 'member',
     userId: null,
@@ -52,27 +51,17 @@ export class AuthService {
     fullname,
   }: LoginDto & { fullname?: string }) {
     try {
-      // Check if user already exists
       const existingUsers = await this.jsonServerService.getUsers({ email });
       if (existingUsers && existingUsers.length > 0) {
         throw new BadRequestException('User with this email already exists!');
       }
 
-      // Create finance record for the new member
-      const finance = await this.jsonServerService.createFinance({
-        totalAllowance: 0, // Will be set later
-        totalSpent: 0,
-      });
-
-      // Create new member
       const newMember = await this.jsonServerService.createUser({
         fullname: fullname || 'New Member',
         email,
         password,
         roles: 'member',
-        financeId: finance.id,
-        currently_at: null, // Will be set when they join a club
-        userId: null,
+        currently_at: null,
         phone: null,
         address: null,
         createdAt: new Date().toISOString(),
@@ -109,7 +98,9 @@ export class AuthService {
       if (user.password !== password)
         throw new BadRequestException('Incorrect email or password!');
       if (user.roles === 'submember') {
-        throw new UnauthorizedException('Sub-members are not allowed to login as member');  
+        throw new UnauthorizedException(
+          'Sub-members are not allowed to login as member',
+        );
       }
       const accessToken = jwt.sign(
         { id: user.id },
@@ -122,7 +113,7 @@ export class AuthService {
       return {
         success: true,
         message: 'Login Successful!',
-        data: { user:userWithoutPassword, accessToken },
+        data: { user: userWithoutPassword, accessToken },
       };
     } catch (error) {
       throw new InternalServerErrorException(error.message);
@@ -135,10 +126,7 @@ export class AuthService {
   ): Promise<{
     success: boolean;
     message: string;
-    data : {userId: string | number;
-    email: string;
-    role: string}
-    
+    data: { userId: string | number; email: string; role: string };
   }> {
     try {
       if (!email || !password) {
@@ -167,8 +155,8 @@ export class AuthService {
         data: {
           userId: user.id,
           email: user.email,
-          role: user.roles
-        }
+          role: user.roles,
+        },
       };
     } catch (error) {
       if (error instanceof BadRequestException) throw error;
@@ -184,7 +172,7 @@ export class AuthService {
     try {
       console.log(userId);
       console.log(invitationCode);
-      
+
       if (!userId || !invitationCode) {
         throw new BadRequestException(
           'User ID and invitation code are required!',
@@ -195,7 +183,7 @@ export class AuthService {
       const users = await this.jsonServerService.getUsers({ id: userId });
       const user = users[0] as User;
       console.log(user);
-      
+
       if (!user) {
         throw new BadRequestException('User not found!');
       }
@@ -211,9 +199,9 @@ export class AuthService {
       });
       const match = invitationCodes[0] as InvitationCode;
       console.log(match.status);
-      
+
       console.log(invitationCodes[0]);
-      
+
       if (!match) {
         throw new BadRequestException('Invalid invitation code!');
       }
@@ -259,7 +247,7 @@ export class AuthService {
         success: true,
         message: 'Sub-member login successful!',
         data: {
-          user:userWithoutPassword,
+          user: userWithoutPassword,
           accessToken,
         },
       };
@@ -281,7 +269,11 @@ export class AuthService {
   }
   async findOneWithEmail(email: string) {
     try {
-      const users = await this.jsonServerService.findOneByField('users', 'email', email);      
+      const users = await this.jsonServerService.findOneByField(
+        'users',
+        'email',
+        email,
+      );
       if (!users || (Array.isArray(users) && users.length === 0)) {
         throw new NotFoundException('Invalid Email!');
       }
@@ -296,15 +288,20 @@ export class AuthService {
   }
   async resetPassword({ email, newPassword }: UpdateAuthDto) {
     try {
-      const users = await this.jsonServerService.findOneByField('users', 'email', email);      
+      const users = await this.jsonServerService.findOneByField(
+        'users',
+        'email',
+        email,
+      );
       if (!users || users.length === 0)
         throw new NotFoundException('User not found!');
-      
+
       const updatedUser = await this.jsonServerService.updateUser(users.id, {
         password: newPassword,
       });
-      return { success: true, message: 'Password Reset!'
-        , //data: updatedUsed
+      return {
+        success: true,
+        message: 'Password Reset!', //data: updatedUsed
       };
     } catch (error) {
       throw new InternalServerErrorException(error.message);
@@ -394,52 +391,55 @@ export class AuthService {
   //   }
   // }
   async updateProfilePicture(userId: number, file?: Express.Multer.File) {
-  try {
-    if (!file) {
-      // Clear profile picture
+    try {
+      if (!file) {
+        // Clear profile picture
+        const updatedUser = await this.jsonServerService.updateUser(userId, {
+          profilePic: null,
+          updatedAt: new Date().toISOString(),
+        });
+        return {
+          success: true,
+          message: 'Profile picture removed successfully',
+          data: {
+            user: {
+              id: updatedUser.id,
+              fullname: updatedUser.fullname,
+              profilePic: null,
+            },
+          },
+        };
+      }
+
+      const image_handler = uploadFileHandler(file.originalname, file);
+      if (!image_handler.success) {
+        throw new BadRequestException(
+          image_handler?.message || 'Image upload failed',
+        );
+      }
+
       const updatedUser = await this.jsonServerService.updateUser(userId, {
-        profilePic: null,
+        profilePic: image_handler.data?.filePath, // save full URL/path
         updatedAt: new Date().toISOString(),
       });
+
       return {
         success: true,
-        message: 'Profile picture removed successfully',
+        message: 'Profile picture updated successfully',
         data: {
           user: {
             id: updatedUser.id,
             fullname: updatedUser.fullname,
-            profilePic: null,
+            profilePic: updatedUser.profilePic, // return URL/path for frontend
           },
         },
       };
+    } catch (error) {
+      throw new InternalServerErrorException(
+        error?.message || 'Failed to update profile picture',
+      );
     }
-
-    const image_handler = uploadFileHandler(file.originalname, file);
-    if (!image_handler.success) {
-      throw new BadRequestException(image_handler?.message || 'Image upload failed');
-    }
-
-    const updatedUser = await this.jsonServerService.updateUser(userId, {
-      profilePic: image_handler.data?.filePath, // save full URL/path
-      updatedAt: new Date().toISOString(),
-    });
-
-    return {
-      success: true,
-      message: 'Profile picture updated successfully',
-      data: {
-        user: {
-          id: updatedUser.id,
-          fullname: updatedUser.fullname,
-          profilePic: updatedUser.profilePic, // return URL/path for frontend
-        },
-      },
-    };
-  } catch (error) {
-    throw new InternalServerErrorException(error?.message || 'Failed to update profile picture');
   }
-}
-
 
   remove(id: number) {
     return `This action removes a #${id} auth`;
