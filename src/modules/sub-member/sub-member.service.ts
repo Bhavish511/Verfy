@@ -273,22 +273,62 @@ export class SubMemberService {
   }
 
   async removeSubMember(id: string) {
-    try {
-      const subMember = await this.jsonServerService.getUser(id);
-      await this.jsonServerService.deleteUser(id);
-
-      const invitationCodes = await this.jsonServerService.getInvitationCodes({
-        subMemberId: id,
-      });
-      for (const code of invitationCodes) {
-        await this.jsonServerService.deleteInvitationCode(code.id);
-      }
-
-      return { success: true, message: 'Sub Member Removed!', subMember };
-    } catch (error) {
-      throw new InternalServerErrorException(error.message);
+  try {
+    // 1. Get subMember
+    const subMember = await this.jsonServerService.getUser(id);
+    if (!subMember) {
+      throw new NotFoundException('Sub Member not found');
     }
+
+    // 2. Delete from user_clubs
+    const userClubs = await this.jsonServerService.getUserClubs({ userId: id });
+    for (const uc of userClubs) {
+      await this.jsonServerService.deleteUserClub(uc.id);
+    }
+
+     // 3. Delete transactions (and related flagCharges first)
+    const transactions = await this.jsonServerService.getTransactions({ userId: id });
+    if (transactions?.length > 0) {
+      for (const tx of transactions) {
+        // Delete flagCharges linked to this transaction
+        const flagCharges = await this.jsonServerService.getFlagCharges({
+          transactionId: tx.id,
+        });
+
+        if (flagCharges?.length > 0) {
+          for (const fc of flagCharges) {
+            await this.jsonServerService.deleteFlagCharge(fc.id);
+          }
+        }
+
+        // Now delete the transaction itself
+        await this.jsonServerService.deleteTransaction(tx.id);
+      }
+    }
+
+    // 4. Delete daily expenses
+    const expenses = await this.jsonServerService.getDailyExpenses({ userId: id });
+    for (const exp of expenses) {
+      await this.jsonServerService.deleteDailyExpense(exp.id);
+    }
+
+    // 6. Delete invitation codes
+    const invitationCodes = await this.jsonServerService.getInvitationCodes({
+      subMemberId: id,
+    });
+    for (const code of invitationCodes) {
+      await this.jsonServerService.deleteInvitationCode(code.id);
+    }
+
+    // 7. Finally, delete the subMember itself
+    await this.jsonServerService.deleteUser(id);
+
+    return { success: true, message: 'Sub Member Removed!', subMember };
+  } catch (error) {
+    throw new InternalServerErrorException(error.message);
   }
+}
+
 
   async editAllowance(userId: string, allowance: number) {
     try {

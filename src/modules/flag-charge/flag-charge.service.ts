@@ -84,7 +84,6 @@ export class FlagChargeService {
         userId,
         transactionId: transaction.id,
         flaggedBy: userId,
-        severity: 'medium',
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
