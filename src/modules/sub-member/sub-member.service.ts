@@ -40,52 +40,52 @@ export class SubMemberService {
   };
 
   async switchClub(clubId: string, req) {
-    try {
-      const user = req.user;
-      const userId = String(user.id);
+  try {
+    const user = req.user;
+    const userId = String(user.id);
 
-      // Verify the member belongs to this club
-      let memberClubs = await this.jsonServerService.getClubsFormember(userId);
-      const clubids = [...new Set(memberClubs.map((club) => club.clubId))];
+    // Fetch all clubs this user belongs to
+    const memberClubs = await this.jsonServerService.getClubsFormember(userId);
 
-      const targetClub = clubids.find(
-        (club: any) => String(club.id) === String(clubId),
-      );
+    // Find the club object that matches
+    const targetClub = memberClubs.find(
+      (club: any) => String(club.clubId) === String(clubId),
+    );
 
-      if (!targetClub) {
-        return {
-          success: false,
-          message: 'You are not a member of this club',
-          data: null,
-        };
-      }
-
-      // Update user's current club
-      const updatedUser = await this.jsonServerService.updateUser(userId, {
-        currently_at: clubId,
-      });
-
-      return {
-        success: true,
-        message: 'Club switched successfully',
-        data: {
-          currentClub: {
-            id: targetClub.id,
-            name: targetClub.name,
-            location: targetClub.location,
-          },
-          user: updatedUser,
-        },
-      };
-    } catch (error) {
+    if (!targetClub) {
       return {
         success: false,
-        message: 'Failed to switch club',
+        message: 'You are not a member of this club',
         data: null,
-        error: error.message,
       };
     }
+
+    // Update user's current club
+    const updatedUser = await this.jsonServerService.updateUser(userId, {
+      currently_at: clubId,
+    });
+
+    return {
+      success: true,
+      message: 'Club switched successfully',
+      data: {
+        currentClub: {
+          id: targetClub.clubId,
+          name: targetClub.name,
+          location: targetClub.location,
+        },
+        user: updatedUser,
+      },
+    };
+  } catch (error) {
+    return {
+      success: false,
+      message: 'Failed to switch club',
+      data: null,
+      error: error.message,
+    };
   }
+}
   async createSubMember(createSubMemberDto: CreateSubMemberDto, req) {
     try {
       const parent = req.user;
