@@ -38,10 +38,10 @@ type UserClub = {
   userId: string;
   clubId: string;
   billingCycle: string;
-  parentMemberId: string;
+  memberId: string;
   totalAllowance: number;
   totalSpent: number;
-}
+};
 
 type Transaction = {
   id: string;
@@ -89,30 +89,36 @@ export class EovService {
       const subMembers = await this.fetchSubMembersForMember(memberId);
       const allUserIds = [memberId, ...subMembers.map((s) => String(s.id))];
 
+      // 3) Get all user clubs for member + sub-members
+      const allUserClubs = (
+        await Promise.all(
+          allUserIds.map((uid) =>
+            this.jsonServerService.getUserClubs({ userId: uid, clubId:member.currently_at }),
+          ),
+        )
+      ).flat();
+
+      // 4) Calculate totals from userClubs
+      const totalAllowance = allUserClubs.reduce(
+        (sum, uc) => sum + (Number(uc.totalAllowance) || 0),
+        0,
+      );
+
+      const totalSpending = allUserClubs.reduce(
+        (sum, uc) => sum + (Number(uc.totalSpent) || 0),
+        0,
+      );
+
+      const remainingAllowance = totalAllowance - totalSpending;
       // 3) Get all transactions for member and sub-members
       const allTransactions = await this.jsonServerService.getTransactions();
       const memberTransactions = allTransactions.filter((tx) =>
         allUserIds.includes(String(tx.userId)),
       );
 
-      // 4) Calculate total spending
-      const totalSpending = memberTransactions.reduce(
-        (sum, tx) => sum + (Number(tx.bill) || 0),
-        0,
-      );
-
-      // 5) Calculate total allowance (member + all sub-members)
-      const allUserClubs = (
-        await Promise.all(
-          allUserIds.map((uid) => this.jsonServerService.getUserClubs({ userId: uid }))
-        )).flat();
-      const totalAllowance = allUserClubs.reduce(
-        (sum, uc) => sum + (uc.totalAllowance || 0),0);
-      const totalSpent = allUserClubs.reduce(
-      (sum, uc) => sum + (uc.totalSpent || 0),0);
       // 6) Get flagged transactions
       const flaggedTransactions = memberTransactions.filter(
-        (tx) => tx.flagChargeId !== null && tx.flagChargeId !== undefined,
+        (tx) => tx.flagChargeId,
       );
 
       // 7) Get flag charges count
@@ -335,83 +341,83 @@ export class EovService {
    * Enhanced PDF generation with time period filtering
    */
   async fetchAndGenerateReport(
-  memberId: string,
-  period?: string,
-): Promise<{ success: boolean; link?: string; message?: string }> {
-  if (!memberId)
-    throw new BadRequestException('Missing authenticated user id');
+    memberId: string,
+    period?: string,
+  ): Promise<{ success: boolean; link?: string; message?: string }> {
+    if (!memberId)
+      throw new BadRequestException('Missing authenticated user id');
 
-  // 1) Load member (pivot submember → parent)
-  let member = await this.fetchUser(memberId);
-  if ((member.roles ?? 'member') !== 'member') {
-    const parentId = member.parentId;
-    if (!parentId) {
+    // 1) Load member (pivot submember → parent)
+    let member = await this.fetchUser(memberId);
+    if ((member.roles ?? 'member') !== 'member') {
+      const parentId = member.parentId;
+      if (!parentId) {
+        throw new BadRequestException(
+          'Sub-member has no parent member (parentId).',
+        );
+      }
+      member = await this.fetchUser(String(parentId));
+      memberId = String(member.id);
+    }
+
+    const clubId = member.currently_at;
+    if (!clubId) {
       throw new BadRequestException(
-        'Sub-member has no parent member (parentId).',
+        'User has no active club (currently_at is empty).',
       );
     }
-    member = await this.fetchUser(String(parentId));
-    memberId = String(member.id);
-  }
 
-  const clubId = member.currently_at;
-  if (!clubId) {
-    throw new BadRequestException(
-      'User has no active club (currently_at is empty).',
+    // 2) Fetch related data
+    const [club, submembers, clubTransactions, flagCharges] = await Promise.all(
+      [
+        this.fetchClub(String(clubId)),
+        this.fetchSubMembersForMember(memberId),
+        this.fetchTransactionsForClub(String(clubId)),
+        this.fetchFlagChargesForMember(memberId),
+      ],
+    );
+
+    // 3) Fetch user_clubs for member + sub-members (for this club only)
+    const allUserClubs = await this.jsonServerService.getUserClubs({
+      clubId: String(clubId),
+    });
+
+    // pick only member + its submembers in this club
+    const allowedIds = new Set([
+      String(memberId),
+      ...submembers.map((u) => String(u.id)),
+    ]);
+    const scopedUserClubs = allUserClubs.filter((uc) =>
+      allowedIds.has(String(uc.userId)),
+    );
+
+    // 4) Scope transactions to member + submembers
+    const spenderIds = new Set<string>(allowedIds);
+    const usersById = new Map<string, User>([
+      [String(member.id), member],
+      ...submembers.map((u) => [String(u.id), u] as [string, User]),
+    ]);
+    let transactions = clubTransactions.filter((t) =>
+      spenderIds.has(String(t.userId)),
+    );
+
+    // 5) Apply time period filtering
+    const { filteredTransactions, periodInfo } =
+      this.filterTransactionsByPeriod(transactions, period);
+    transactions = filteredTransactions;
+
+    // 6) Generate PDF (⚡ updated to take user_clubs instead of finance)
+    return this.generatePDFReport(
+      member,
+      club,
+      submembers,
+      scopedUserClubs, // 👈 pass user_clubs here
+      transactions,
+      flagCharges,
+      usersById,
+      periodInfo,
     );
   }
-
-  // 2) Fetch related data
-  const [club, submembers, clubTransactions, flagCharges] =
-    await Promise.all([
-      this.fetchClub(String(clubId)),
-      this.fetchSubMembersForMember(memberId),
-      this.fetchTransactionsForClub(String(clubId)),
-      this.fetchFlagChargesForMember(memberId),
-    ]);
-
-  // 3) Fetch user_clubs for member + sub-members (for this club only)
-  const allUserClubs = await this.jsonServerService.getUserClubs({
-    clubId: String(clubId),
-  });
-
-  // pick only member + its submembers in this club
-  const allowedIds = new Set([
-    String(memberId),
-    ...submembers.map((u) => String(u.id)),
-  ]);
-  const scopedUserClubs = allUserClubs.filter((uc) =>
-    allowedIds.has(String(uc.userId)),
-  );
-
-  // 4) Scope transactions to member + submembers
-  const spenderIds = new Set<string>(allowedIds);
-  const usersById = new Map<string, User>([
-    [String(member.id), member],
-    ...submembers.map((u) => [String(u.id), u] as [string, User]),
-  ]);
-  let transactions = clubTransactions.filter((t) =>
-    spenderIds.has(String(t.userId)),
-  );
-
-  // 5) Apply time period filtering
-  const { filteredTransactions, periodInfo } =
-    this.filterTransactionsByPeriod(transactions, period);
-  transactions = filteredTransactions;
-
-  // 6) Generate PDF (⚡ updated to take user_clubs instead of finance)
-  return this.generatePDFReport(
-    member,
-    club,
-    submembers,
-    scopedUserClubs, // 👈 pass user_clubs here
-    transactions,
-    flagCharges,
-    usersById,
-    periodInfo,
-  );
-}
-
 
   // ---------------- helpers ----------------
 
@@ -478,34 +484,33 @@ export class EovService {
    * Calculate total allowance for member and sub-members
    */
   private async calculateTotalAllowance(
-  member: User,
-  subMembers: User[],
-): Promise<number> {
-  try {
-    // Get all user_clubs for this member + sub-members in the given club
-    const allUserIds = [member.id, ...subMembers.map((sm) => sm.id)];
+    member: User,
+    subMembers: User[],
+  ): Promise<number> {
+    try {
+      // Get all user_clubs for this member + sub-members in the given club
+      const allUserIds = [member.id, ...subMembers.map((sm) => sm.id)];
 
-    const userClubs = await this.jsonServerService.getUserClubs({
-      clubId: String(member.currently_at),
-    });
+      const userClubs = await this.jsonServerService.getUserClubs({
+        clubId: String(member.currently_at),
+      });
 
-    // Only take user_clubs belonging to this member + its sub-members
-    const relevantUserClubs = userClubs.filter((uc) =>
-      allUserIds.includes(uc.userId),
-    );
+      // Only take user_clubs belonging to this member + its sub-members
+      const relevantUserClubs = userClubs.filter((uc) =>
+        allUserIds.includes(uc.userId),
+      );
 
-    // Sum totalAllowance from these records
-    const totalAllowance = relevantUserClubs.reduce(
-      (sum, uc) => sum + (uc.totalAllowance || 0),
-      0,
-    );
+      // Sum totalAllowance from these records
+      const totalAllowance = relevantUserClubs.reduce(
+        (sum, uc) => sum + (uc.totalAllowance || 0),
+        0,
+      );
 
-    return totalAllowance;
-  } catch {
-    return 0;
+      return totalAllowance;
+    } catch {
+      return 0;
+    }
   }
-}
-
 
   /**
    * Calculate category breakdown
@@ -540,168 +545,167 @@ export class EovService {
    * Get full club and member breakdown
    */
   private async getClubAndMemberBreakdown(
-  member: User,
-  subMembers: User[],
-  transactions: Transaction[],
-) {
-  try {
-    // 1) Get current club info
-    const club = await this.fetchClub(String(member.currently_at));
+    member: User,
+    subMembers: User[],
+    transactions: Transaction[],
+  ) {
+    try {
+      // 1) Get current club info
+      const club = await this.fetchClub(String(member.currently_at));
 
-    // 2) Get the user_club record for the member in this club
-    const [memberClub] = await this.jsonServerService.getUserClubs({
-      userId: String(member.id),
-      clubId: String(member.currently_at),
-    });
+      // 2) Get the user_club record for the member in this club
+      const [memberClub] = await this.jsonServerService.getUserClubs({
+        userId: String(member.id),
+        clubId: String(member.currently_at),
+      });
 
-    // 3) Get user_club records for each sub-member in this club
-    const subMemberClubs = await Promise.all(
-      subMembers.map(async (sm) => {
-        const [uc] = await this.jsonServerService.getUserClubs({
-          userId: String(sm.id),
-          clubId: String(member.currently_at),
-        });
-        return { subMember: sm, userClub: uc };
-      }),
-    );
+      // 3) Get user_club records for each sub-member in this club
+      const subMemberClubs = await Promise.all(
+        subMembers.map(async (sm) => {
+          const [uc] = await this.jsonServerService.getUserClubs({
+            userId: String(sm.id),
+            clubId: String(member.currently_at),
+          });
+          return { subMember: sm, userClub: uc };
+        }),
+      );
 
-    // 4) Member transactions (scoped to this club)
-    const memberTransactions = transactions.filter(
-      (tx) =>
-        String(tx.userId) === String(member.id) &&
-        String(tx.clubId) === String(member.currently_at),
-    );
-    const memberSpending = memberTransactions.reduce(
-      (sum, tx) => sum + (Number(tx.bill) || 0),
-      0,
-    );
-
-    // 5) Sub-member breakdown
-    const subMemberBreakdown = subMemberClubs.map(({ subMember, userClub }) => {
-      const subMemberTransactions = transactions.filter(
+      // 4) Member transactions (scoped to this club)
+      const memberTransactions = transactions.filter(
         (tx) =>
-          String(tx.userId) === String(subMember.id) &&
+          String(tx.userId) === String(member.id) &&
           String(tx.clubId) === String(member.currently_at),
       );
-      const subMemberSpending = subMemberTransactions.reduce(
+      const memberSpending = memberTransactions.reduce(
         (sum, tx) => sum + (Number(tx.bill) || 0),
         0,
       );
 
-      return {
-        subMember: {
-          id: subMember.id,
-          fullname: subMember.fullname,
-          email: subMember.email,
-          roles: subMember.roles,
-        },
-        clubFinance: {
-          totalAllowance: userClub?.totalAllowance || 0,
-          totalSpent: userClub?.totalSpent || 0,
-          remainingAllowance:
-            (userClub?.totalAllowance || 0) - (userClub?.totalSpent || 0),
-        },
-        transactions: {
-          count: subMemberTransactions.length,
-          totalSpent: subMemberSpending,
-          verified: subMemberTransactions.filter(
-            (tx) => tx.status === 'approved' && tx.verifyCharge === true,
-          ).length,
-          flagged: subMemberTransactions.filter(
+      // 5) Sub-member breakdown
+      const subMemberBreakdown = subMemberClubs.map(
+        ({ subMember, userClub }) => {
+          const subMemberTransactions = transactions.filter(
             (tx) =>
-              tx.flagChargeId !== null && tx.flagChargeId !== undefined,
+              String(tx.userId) === String(subMember.id) &&
+              String(tx.clubId) === String(member.currently_at),
+          );
+          const subMemberSpending = subMemberTransactions.reduce(
+            (sum, tx) => sum + (Number(tx.bill) || 0),
+            0,
+          );
+
+          return {
+            subMember: {
+              id: subMember.id,
+              fullname: subMember.fullname,
+              email: subMember.email,
+              roles: subMember.roles,
+            },
+            clubFinance: {
+              totalAllowance: userClub?.totalAllowance || 0,
+              totalSpent: userClub?.totalSpent || 0,
+              remainingAllowance:
+                (userClub?.totalAllowance || 0) - (userClub?.totalSpent || 0),
+            },
+            transactions: {
+              count: subMemberTransactions.length,
+              totalSpent: subMemberSpending,
+              verified: subMemberTransactions.filter(
+                (tx) => tx.status === 'approved' && tx.verifyCharge === true,
+              ).length,
+              flagged: subMemberTransactions.filter(
+                (tx) =>
+                  tx.flagChargeId !== null && tx.flagChargeId !== undefined,
+              ).length,
+            },
+          };
+        },
+      );
+
+      // 6) Totals (member + subs for this club)
+      return {
+        club: {
+          id: club?.id || member.currently_at,
+          name: club?.name || 'Unknown Club',
+          location: club?.location || 'Unknown Location',
+        },
+        member: {
+          id: member.id,
+          fullname: member.fullname,
+          email: member.email,
+          roles: member.roles,
+          clubFinance: {
+            totalAllowance: memberClub?.totalAllowance || 0,
+            totalSpent: memberClub?.totalSpent || 0,
+            remainingAllowance:
+              (memberClub?.totalAllowance || 0) - (memberClub?.totalSpent || 0),
+          },
+          transactions: {
+            count: memberTransactions.length,
+            totalSpent: memberSpending,
+            verified: memberTransactions.filter(
+              (tx) => tx.status === 'approved' && tx.verifyCharge === true,
+            ).length,
+            flagged: memberTransactions.filter(
+              (tx) => tx.flagChargeId !== null && tx.flagChargeId !== undefined,
+            ).length,
+          },
+        },
+        subMembers: subMemberBreakdown,
+        totals: {
+          totalAllowance:
+            (memberClub?.totalAllowance || 0) +
+            subMemberBreakdown.reduce(
+              (sum, sm) => sum + (sm.clubFinance?.totalAllowance || 0),
+              0,
+            ),
+          totalSpent:
+            (memberClub?.totalSpent || 0) +
+            subMemberBreakdown.reduce(
+              (sum, sm) => sum + (sm.clubFinance?.totalSpent || 0),
+              0,
+            ),
+          totalTransactions: transactions.filter(
+            (tx) => String(tx.clubId) === String(member.currently_at),
+          ).length,
+          totalVerified: transactions.filter(
+            (tx) =>
+              String(tx.clubId) === String(member.currently_at) &&
+              tx.status === 'approved' &&
+              tx.verifyCharge === true,
+          ).length,
+          totalFlagged: transactions.filter(
+            (tx) =>
+              String(tx.clubId) === String(member.currently_at) &&
+              tx.flagChargeId !== null &&
+              tx.flagChargeId !== undefined,
           ).length,
         },
       };
-    });
-
-    // 6) Totals (member + subs for this club)
-    return {
-      club: {
-        id: club?.id || member.currently_at,
-        name: club?.name || 'Unknown Club',
-        location: club?.location || 'Unknown Location',
-      },
-      member: {
-        id: member.id,
-        fullname: member.fullname,
-        email: member.email,
-        roles: member.roles,
-        clubFinance: {
-          totalAllowance: memberClub?.totalAllowance || 0,
-          totalSpent: memberClub?.totalSpent || 0,
-          remainingAllowance:
-            (memberClub?.totalAllowance || 0) -
-            (memberClub?.totalSpent || 0),
+    } catch (error) {
+      return {
+        club: {
+          id: 'unknown',
+          name: 'Unknown Club',
+          location: 'Unknown Location',
         },
-        transactions: {
-          count: memberTransactions.length,
-          totalSpent: memberSpending,
-          verified: memberTransactions.filter(
-            (tx) => tx.status === 'approved' && tx.verifyCharge === true,
-          ).length,
-          flagged: memberTransactions.filter(
-            (tx) =>
-              tx.flagChargeId !== null && tx.flagChargeId !== undefined,
-          ).length,
+        member: {
+          id: member.id,
+          fullname: member.fullname,
+          email: member.email,
+          roles: member.roles,
         },
-      },
-      subMembers: subMemberBreakdown,
-      totals: {
-        totalAllowance:
-          (memberClub?.totalAllowance || 0) +
-          subMemberBreakdown.reduce(
-            (sum, sm) => sum + (sm.clubFinance?.totalAllowance || 0),
-            0,
-          ),
-        totalSpent:
-          (memberClub?.totalSpent || 0) +
-          subMemberBreakdown.reduce(
-            (sum, sm) => sum + (sm.clubFinance?.totalSpent || 0),
-            0,
-          ),
-        totalTransactions: transactions.filter(
-          (tx) => String(tx.clubId) === String(member.currently_at),
-        ).length,
-        totalVerified: transactions.filter(
-          (tx) =>
-            String(tx.clubId) === String(member.currently_at) &&
-            tx.status === 'approved' &&
-            tx.verifyCharge === true,
-        ).length,
-        totalFlagged: transactions.filter(
-          (tx) =>
-            String(tx.clubId) === String(member.currently_at) &&
-            tx.flagChargeId !== null &&
-            tx.flagChargeId !== undefined,
-        ).length,
-      },
-    };
-  } catch (error) {
-    return {
-      club: {
-        id: 'unknown',
-        name: 'Unknown Club',
-        location: 'Unknown Location',
-      },
-      member: {
-        id: member.id,
-        fullname: member.fullname,
-        email: member.email,
-        roles: member.roles,
-      },
-      subMembers: [],
-      totals: {
-        totalAllowance: 0,
-        totalSpent: 0,
-        totalTransactions: 0,
-        totalVerified: 0,
-        totalFlagged: 0,
-      },
-    };
+        subMembers: [],
+        totals: {
+          totalAllowance: 0,
+          totalSpent: 0,
+          totalTransactions: 0,
+          totalVerified: 0,
+          totalFlagged: 0,
+        },
+      };
+    }
   }
-}
-
 
   /**
    * Calculate time-based breakdown (day-to-day, week-to-week, month-to-month)
@@ -875,241 +879,265 @@ export class EovService {
    * Generate PDF report with period information
    */
   private async generatePDFReport(
-  member: User,
-  club: Club | null,
-  submembers: User[],
-  userClubs: UserClub[], // 👈 pass user_clubs for this member
-  transactions: Transaction[],
-  flagCharges: FlagCharge[],
-  usersById: Map<string, User>,
-  periodInfo: { name: string; startDate: string; endDate: string },
-): Promise<{ success: boolean; link?: string; message?: string }> {
-  try {
-    const doc = new PDFDocument({
-      margin: 40,
-      info: { Title: 'Transactions Report' },
-    });
+    member: User,
+    club: Club | null,
+    submembers: User[],
+    userClubs: UserClub[], // 👈 pass user_clubs for this member
+    transactions: Transaction[],
+    flagCharges: FlagCharge[],
+    usersById: Map<string, User>,
+    periodInfo: { name: string; startDate: string; endDate: string },
+  ): Promise<{ success: boolean; link?: string; message?: string }> {
+    try {
+      const doc = new PDFDocument({
+        margin: 40,
+        info: { Title: 'Transactions Report' },
+      });
 
-    const uploadDir = path.resolve(__dirname, '..', '..', '..', 'uploads');
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-
-    const fileName = `transactions-report-${periodInfo.name.toLowerCase()}-${Date.now()}.pdf`;
-    const filePath = path.join(uploadDir, fileName);
-
-    const stream = fs.createWriteStream(filePath);
-    doc.pipe(stream);
-
-    const safeMoveDown = (n = 0.5) => {
-      try {
-        doc.moveDown(n);
-      } catch {
-        /* ignore */
+      const uploadDir = path.resolve(__dirname, '..', '..', '..', 'uploads');
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
       }
-    };
 
-    const formatCurrency = (val: number) =>
-      `$${(val || 0).toLocaleString(undefined, {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      })}`;
+      const fileName = `transactions-report-${periodInfo.name.toLowerCase()}-${Date.now()}.pdf`;
+      const filePath = path.join(uploadDir, fileName);
 
-    // ========== Title ==========
-    doc.fontSize(20).text('Transactions Report', { align: 'center' });
-    safeMoveDown(0.3);
-    doc
-      .fontSize(12)
-      .fillColor('blue')
-      .text(
-        `Period: ${periodInfo.name} (${periodInfo.startDate} to ${periodInfo.endDate})`,
-        { align: 'center' },
-      )
-      .fillColor('black');
-    safeMoveDown(0.3);
-    doc
-      .fontSize(10)
-      .fillColor('gray')
-      .text(`Generated: ${new Date().toLocaleString()}`, { align: 'center' })
-      .fillColor('black');
-    safeMoveDown(1);
+      const stream = fs.createWriteStream(filePath);
+      doc.pipe(stream);
 
-    const section = (title: string) => {
-      doc.font('Helvetica-Bold').fontSize(14).text(title);
-      doc.font('Helvetica').fontSize(11);
-      safeMoveDown(0.4);
-    };
+      const safeMoveDown = (n = 0.5) => {
+        try {
+          doc.moveDown(n);
+        } catch {
+          /* ignore */
+        }
+      };
 
-    // ========== Member & Club ==========
-    section('Member & Club');
-    doc.text(`Member: ${member.fullname ?? member.id}`);
-    doc.text(`Email:  ${member.email ?? '—'}`);
-    doc.text(`Club:   ${club?.name ?? 'Unknown'} (${club?.location ?? '—'})`);
-    safeMoveDown(0.8);
+      const formatCurrency = (val: number) =>
+        `$${(val || 0).toLocaleString(undefined, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        })}`;
 
-    // ========== Club Finance ==========
-    section('Club Finance Summary');
-    const userClub = userClubs.find(
-      (uc) => String(uc.userId) === String(member.id) && String(uc.clubId) === String(club?.id),
-    );
-    if (userClub) {
-      doc.text(`Total Allowance: ${formatCurrency(userClub.totalAllowance)}`);
-      doc.text(`Total Spent:     ${formatCurrency(userClub.totalSpent)}`);
-      doc.text(
-        `Remaining:       ${formatCurrency(
-          (userClub.totalAllowance || 0) - (userClub.totalSpent || 0),
-        )}`,
-      );
-    } else {
-      doc.fontSize(10).text('No user_club record found for this member in this club.');
-    }
-    safeMoveDown(0.8);
+      // ========== Title ==========
+      doc.fontSize(20).text('Transactions Report', { align: 'center' });
+      safeMoveDown(0.3);
+      doc
+        .fontSize(12)
+        .fillColor('blue')
+        .text(
+          `Period: ${periodInfo.name} (${periodInfo.startDate} to ${periodInfo.endDate})`,
+          { align: 'center' },
+        )
+        .fillColor('black');
+      safeMoveDown(0.3);
+      doc
+        .fontSize(10)
+        .fillColor('gray')
+        .text(`Generated: ${new Date().toLocaleString()}`, { align: 'center' })
+        .fillColor('black');
+      safeMoveDown(1);
 
-    // ========== Sub-members ==========
-    section('Sub-members');
-    if (!submembers.length) {
-      doc.fontSize(10).text('No sub-members.');
-    } else {
-      submembers.forEach((s, i) => {
-        doc.text(`${i + 1}. ${s.fullname ?? s.id}  •  ${s.email ?? '—'}`);
-      });
-    }
-    safeMoveDown(1);
+      const section = (title: string) => {
+        doc.font('Helvetica-Bold').fontSize(14).text(title);
+        doc.font('Helvetica').fontSize(11);
+        safeMoveDown(0.4);
+      };
 
-    // ========== Period Summary ==========
-    section('Period Summary');
-    doc.text(`Period: ${periodInfo.name}`);
-    doc.text(`Date Range: ${periodInfo.startDate} to ${periodInfo.endDate}`);
-    doc.text(`Transactions in Period: ${transactions.length}`);
-    const totalBill = transactions.reduce((s, t) => s + (Number(t?.bill) || 0), 0);
-    doc.text(`Total Spending: ${formatCurrency(totalBill)}`);
-    safeMoveDown(0.8);
-
-    // ========== Status Breakdown ==========
-    const approved = transactions.filter((t) => t?.status === 'approved').length;
-    const refused = transactions.filter((t) => t?.status === 'refused').length;
-    const pending = transactions.filter((t) => t?.status === 'pending').length;
-
-    section('Status Breakdown');
-    doc.text(`Approved: ${approved}`);
-    doc.text(`Refused:  ${refused}`);
-    doc.text(`Pending:  ${pending}`);
-    safeMoveDown(0.8);
-
-    // ========== Category Breakdown ==========
-    const categoryTotals = transactions.reduce<Record<string, number>>((acc, t) => {
-      const amt = Number(t.bill) || 0;
-      acc[t.category] = (acc[t.category] ?? 0) + amt;
-      return acc;
-    }, {});
-
-    section('Category Breakdown');
-    const cats = Object.entries(categoryTotals);
-    if (!cats.length) {
-      doc.fontSize(10).text('No categories to show.');
-    } else {
-      cats.forEach(([cat, amount]) => doc.text(`- ${cat}: ${formatCurrency(amount)}`));
-    }
-    safeMoveDown(1);
-
-    // ========== Time Breakdown ==========
-    const timeBreakdown = this.calculateTimeBreakdown(
-      transactions,
-      periodInfo.name.toLowerCase(),
-    );
-    if (timeBreakdown.length > 0) {
-      section(`${periodInfo.name} Breakdown`);
-      doc.fontSize(10);
-      timeBreakdown.forEach((entry, idx) => {
-        doc.text(
-          `${idx + 1}. ${entry.date}: ${entry.transactions} transactions, ${formatCurrency(
-            entry.totalSpent,
-          )} spent, ${entry.flaggedCount} flagged`,
-        );
-        safeMoveDown(0.2);
-      });
+      // ========== Member & Club ==========
+      section('Member & Club');
+      doc.text(`Member: ${member.fullname ?? member.id}`);
+      doc.text(`Email:  ${member.email ?? '—'}`);
+      doc.text(`Club:   ${club?.name ?? 'Unknown'} (${club?.location ?? '—'})`);
       safeMoveDown(0.8);
-    }
 
-    // ========== Transactions (Detailed) ==========
-    section('Transactions (Detailed)');
-    if (!transactions.length) {
-      doc.fontSize(10).text('No transactions found for this period.');
-    } else {
-      doc.fontSize(10);
-      const pageBottom = () => (Number((doc as any).page?.height) || 842) - 80;
+      // ========== Club Finance ==========
+      section('Club Finance Summary');
+      const userClub = userClubs.find(
+        (uc) =>
+          String(uc.userId) === String(member.id) &&
+          String(uc.clubId) === String(club?.id),
+      );
+      if (userClub) {
+        doc.text(`Total Allowance: ${formatCurrency(userClub.totalAllowance)}`);
+        doc.text(`Total Spent:     ${formatCurrency(userClub.totalSpent)}`);
+        doc.text(
+          `Remaining:       ${formatCurrency(
+            (userClub.totalAllowance || 0) - (userClub.totalSpent || 0),
+          )}`,
+        );
+      } else {
+        doc
+          .fontSize(10)
+          .text('No user_club record found for this member in this club.');
+      }
+      safeMoveDown(0.8);
 
-      transactions.forEach((t, idx) => {
-        const spender = usersById.get(String(t.userId));
-        const spenderLine = spender
-          ? `${spender.fullname ?? spender.id} / ${spender.email ?? '—'} / ${
-              spender.roles ?? '—'
-            }`
-          : `Unknown (${t.userId})`;
+      // ========== Sub-members ==========
+      section('Sub-members');
+      if (!submembers.length) {
+        doc.fontSize(10).text('No sub-members.');
+      } else {
+        submembers.forEach((s, i) => {
+          doc.text(`${i + 1}. ${s.fullname ?? s.id}  •  ${s.email ?? '—'}`);
+        });
+      }
+      safeMoveDown(1);
 
-        const line =
-          `${idx + 1}. ` +
-          `Txn: ${t.id} | Club: ${t.clubId} | Category: ${t.category} | ` +
-          `Bill: ${formatCurrency(Number(t.bill) || 0)} | Status: ${t.status} | Verified: ${
-            t.verifyCharge ? 'Yes' : 'No'
-          } | ` +
-          `Flag: ${t.flagChargeId ?? ''}\n` +
-          `    Spender: ${spenderLine}`;
+      // ========== Period Summary ==========
+      section('Period Summary');
+      doc.text(`Period: ${periodInfo.name}`);
+      doc.text(`Date Range: ${periodInfo.startDate} to ${periodInfo.endDate}`);
+      doc.text(`Transactions in Period: ${transactions.length}`);
+      const totalBill = transactions.reduce(
+        (s, t) => s + (Number(t?.bill) || 0),
+        0,
+      );
+      doc.text(`Total Spending: ${formatCurrency(totalBill)}`);
+      safeMoveDown(0.8);
 
-        doc.text(line);
-        safeMoveDown(0.2);
+      // ========== Status Breakdown ==========
+      const approved = transactions.filter(
+        (t) => t?.status === 'approved',
+      ).length;
+      const refused = transactions.filter(
+        (t) => t?.status === 'refused',
+      ).length;
+      const pending = transactions.filter(
+        (t) => t?.status === 'pending',
+      ).length;
 
-        try {
-          if (Number((doc as any).y) > pageBottom()) doc.addPage();
-        } catch {
-          /* ignore */
-        }
+      section('Status Breakdown');
+      doc.text(`Approved: ${approved}`);
+      doc.text(`Refused:  ${refused}`);
+      doc.text(`Pending:  ${pending}`);
+      safeMoveDown(0.8);
+
+      // ========== Category Breakdown ==========
+      const categoryTotals = transactions.reduce<Record<string, number>>(
+        (acc, t) => {
+          const amt = Number(t.bill) || 0;
+          acc[t.category] = (acc[t.category] ?? 0) + amt;
+          return acc;
+        },
+        {},
+      );
+
+      section('Category Breakdown');
+      const cats = Object.entries(categoryTotals);
+      if (!cats.length) {
+        doc.fontSize(10).text('No categories to show.');
+      } else {
+        cats.forEach(([cat, amount]) =>
+          doc.text(`- ${cat}: ${formatCurrency(amount)}`),
+        );
+      }
+      safeMoveDown(1);
+
+      // ========== Time Breakdown ==========
+      const timeBreakdown = this.calculateTimeBreakdown(
+        transactions,
+        periodInfo.name.toLowerCase(),
+      );
+      if (timeBreakdown.length > 0) {
+        section(`${periodInfo.name} Breakdown`);
+        doc.fontSize(10);
+        timeBreakdown.forEach((entry, idx) => {
+          doc.text(
+            `${idx + 1}. ${entry.date}: ${entry.transactions} transactions, ${formatCurrency(
+              entry.totalSpent,
+            )} spent, ${entry.flaggedCount} flagged`,
+          );
+          safeMoveDown(0.2);
+        });
+        safeMoveDown(0.8);
+      }
+
+      // ========== Transactions (Detailed) ==========
+      section('Transactions (Detailed)');
+      if (!transactions.length) {
+        doc.fontSize(10).text('No transactions found for this period.');
+      } else {
+        doc.fontSize(10);
+        const pageBottom = () =>
+          (Number((doc as any).page?.height) || 842) - 80;
+
+        transactions.forEach((t, idx) => {
+          const spender = usersById.get(String(t.userId));
+          const spenderLine = spender
+            ? `${spender.fullname ?? spender.id} / ${spender.email ?? '—'} / ${
+                spender.roles ?? '—'
+              }`
+            : `Unknown (${t.userId})`;
+
+          const line =
+            `${idx + 1}. ` +
+            `Txn: ${t.id} | Club: ${t.clubId} | Category: ${t.category} | ` +
+            `Bill: ${formatCurrency(Number(t.bill) || 0)} | Status: ${t.status} | Verified: ${
+              t.verifyCharge ? 'Yes' : 'No'
+            } | ` +
+            `Flag: ${t.flagChargeId ?? ''}\n` +
+            `    Spender: ${spenderLine}`;
+
+          doc.text(line);
+          safeMoveDown(0.2);
+
+          try {
+            if (Number((doc as any).y) > pageBottom()) doc.addPage();
+          } catch {
+            /* ignore */
+          }
+        });
+      }
+
+      safeMoveDown(1.2);
+
+      // ========== Flagged Charges ==========
+      section('Flagged Charges');
+      if (!flagCharges.length) {
+        doc.fontSize(10).text('No flagged charges.');
+      } else {
+        flagCharges.forEach((f, idx) => {
+          doc
+            .fontSize(11)
+            .text(`#${idx + 1} (ID: ${f.id})  Owner: ${f.userId}`);
+          doc.fontSize(10).text(`Comment: ${f.comment}`);
+          if (Array.isArray(f.reasons) && f.reasons.length) {
+            doc.text(`Reasons: ${f.reasons.join(', ')}`);
+          }
+          safeMoveDown(0.3);
+          try {
+            const bottom = (Number((doc as any).page?.height) || 842) - 80;
+            if (Number((doc as any).y) > bottom) doc.addPage();
+          } catch {
+            /* ignore */
+          }
+        });
+      }
+
+      // ========== Footer ==========
+      safeMoveDown(2);
+      doc
+        .fontSize(9)
+        .fillColor('gray')
+        .text('End of report', { align: 'center' })
+        .fillColor('black');
+
+      doc.end();
+
+      await new Promise<void>((resolve, reject) => {
+        stream.on('finish', () => resolve());
+        stream.on('error', reject);
       });
+
+      return {
+        success: true,
+        link: `/uploads/${fileName}`,
+      };
+    } catch (error: any) {
+      return { success: false, message: error.message };
     }
-
-    safeMoveDown(1.2);
-
-    // ========== Flagged Charges ==========
-    section('Flagged Charges');
-    if (!flagCharges.length) {
-      doc.fontSize(10).text('No flagged charges.');
-    } else {
-      flagCharges.forEach((f, idx) => {
-        doc.fontSize(11).text(`#${idx + 1} (ID: ${f.id})  Owner: ${f.userId}`);
-        doc.fontSize(10).text(`Comment: ${f.comment}`);
-        if (Array.isArray(f.reasons) && f.reasons.length) {
-          doc.text(`Reasons: ${f.reasons.join(', ')}`);
-        }
-        safeMoveDown(0.3);
-        try {
-          const bottom = (Number((doc as any).page?.height) || 842) - 80;
-          if (Number((doc as any).y) > bottom) doc.addPage();
-        } catch {
-          /* ignore */
-        }
-      });
-    }
-
-    // ========== Footer ==========
-    safeMoveDown(2);
-    doc.fontSize(9).fillColor('gray').text('End of report', { align: 'center' }).fillColor('black');
-
-    doc.end();
-
-    await new Promise<void>((resolve, reject) => {
-      stream.on('finish', () => resolve());
-      stream.on('error', reject);
-    });
-
-    return {
-      success: true,
-      link: `/uploads/${fileName}`,
-    };
-  } catch (error: any) {
-    return { success: false, message: error.message };
   }
-}
-
 
   private async fetchUser(userId: string): Promise<User> {
     try {
@@ -1151,25 +1179,27 @@ export class EovService {
     }
   }
 
-  private async fetchFinance(userId: string, clubId: string): Promise<{ totalAllowance: number; totalSpent: number } | null> {
-  if (!userId || !clubId) return null;
-  try {
-    const [userClub] = await this.jsonServerService.getUserClubs({
-      userId,
-      clubId,
-    });
+  private async fetchFinance(
+    userId: string,
+    clubId: string,
+  ): Promise<{ totalAllowance: number; totalSpent: number } | null> {
+    if (!userId || !clubId) return null;
+    try {
+      const [userClub] = await this.jsonServerService.getUserClubs({
+        userId,
+        clubId,
+      });
 
-    if (!userClub) return null;
+      if (!userClub) return null;
 
-    return {
-      totalAllowance: userClub.totalAllowance ?? 0,
-      totalSpent: userClub.totalSpent ?? 0,
-    };
-  } catch {
-    return null; // not fatal
+      return {
+        totalAllowance: userClub.totalAllowance ?? 0,
+        totalSpent: userClub.totalSpent ?? 0,
+      };
+    } catch {
+      return null; // not fatal
+    }
   }
-}
-
 
   private async fetchTransactionsForClub(
     clubId: string,

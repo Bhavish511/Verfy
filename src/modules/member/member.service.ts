@@ -23,34 +23,20 @@ export class MemberService {
       const currentClubId = String(req.user.currently_at);
 
       // Pull everything in parallel
+      console.log(userId);
+      
       const [allUserClubs, { data: transactionsData }, allUsers] =
         await Promise.all([
-          this.jsonServerService.getUserClubs({ parentMemberId: userId }),
+          this.jsonServerService.getUserClubs({ memberId: userId }),
           this.transactionService.findAllForMember(req), // already filtered to current club
           this.jsonServerService.getUsers(),
         ]);
-
-      // Parent’s own clubs
-      const parentUserClubs = allUserClubs.filter(
-        (uc) => String(uc.userId) === String(uc.parentMemberId),
-      );
-
-      // Extract unique clubIds
-      const parentClubIds = [
-        ...new Set(parentUserClubs.map((uc) => uc.clubId)),
-      ];
-
-      // Fetch club details
-      const clubs = (
-        await Promise.all(
-          parentClubIds.map((id) => this.jsonServerService.getClubs({ id })),
-        )
-      ).flat();
-
+      
       // Build helpers
       const subMembers = allUsers.filter(
         (u: any) => String(u.parentId) === userId && u.roles === 'submember',
       );
+
       const allowedUserIds = new Set<string>([
         userId,
         ...subMembers.map((s: any) => String(s.id)),
@@ -59,40 +45,80 @@ export class MemberService {
       const userById = new Map<string, any>(
         allUsers.map((u: any) => [String(u.id), u]),
       );
+
       const nameOf = (uid: string | number) =>
         userById.get(String(uid))?.fullname || 'Unknown';
 
-      // Clubs for parent + subs, filtered to only current club
+      // --------------------------
+      // Relevant clubs for current club only
+      // --------------------------
       const relevantClubs = allUserClubs.filter(
         (uc) =>
           allowedUserIds.has(String(uc.userId)) &&
           String(uc.clubId) === currentClubId,
       );
 
-      // Totals for just this club
-      const totalSpent = relevantClubs.reduce(
+      // Totals for parent + sub-members in current club
+      const totalSpentAll = relevantClubs.reduce(
         (sum, uc) => sum + (Number(uc.totalSpent) || 0),
         0,
       );
 
-      const totalAllowance = relevantClubs.reduce(
+      const totalAllowanceAll = relevantClubs.reduce(
         (sum, uc) => sum + (Number(uc.totalAllowance) || 0),
         0,
       );
-      const remainingAllowance = totalAllowance - totalSpent;
 
+      const remainingAllowanceAll = totalAllowanceAll - totalSpentAll;
+
+      // --------------------------
+      // Sub-member breakdown (current club only)
+      // --------------------------
+      const subMemberBreakdown = subMembers.map((sm) => {
+        const memberClub = relevantClubs.find(
+          (uc) => String(uc.userId) === String(sm.id),
+        );
+        const allowance = memberClub
+          ? Number(memberClub.totalAllowance) || 0
+          : 0;
+        const spent = memberClub ? Number(memberClub.totalSpent) || 0 : 0;
+        return {
+          id: sm.id,
+          name: sm.fullname,
+          totalSpent: spent,
+          totalAllowance: allowance,
+          remainingAllowance: allowance - spent,
+        };
+      });
+
+      // --------------------------
+      // Clubs info
+      // --------------------------
+      const parentClubIds = [
+        ...new Set(
+          allUserClubs
+            .filter((uc) => String(uc.userId) === userId)
+            .map((uc) => uc.clubId),
+        ),
+      ];
+      const clubs = (
+        await Promise.all(
+          parentClubIds.map((id) => this.jsonServerService.getClubs({ id })),
+        )
+      ).flat();
+
+      // --------------------------
+      // Pending transactions for current club
+      // --------------------------
       const pendingApprovals = transactionsData?.pendingApprovals ?? 0;
 
-      // Pending list (already scoped by service)
       const allPending: any[] = transactionsData?.pendingCharges ?? [];
-
       const filteredPending = allPending.filter(
         (c) =>
           allowedUserIds.has(String(c.userId)) &&
           String(c.clubId) === currentClubId,
       );
 
-      // Sort by createdAt desc and take top 2
       const top2Pending = filteredPending
         .slice()
         .sort(
@@ -109,7 +135,7 @@ export class MemberService {
         userName: nameOf(charge.userId),
       }));
 
-      // Return enriched transactions
+      // Enriched transactions
       const allTransactions: any[] = transactionsData?.transactions ?? [];
       const wantedIds = new Set(top2Pending.map((c) => String(c.id)));
 
@@ -117,16 +143,20 @@ export class MemberService {
         .filter((t) => wantedIds.has(String(t.id)))
         .map((t) => ({ ...t, userName: nameOf(t.userId) }));
 
+      // --------------------------
+      // Return response
+      // --------------------------
       return {
         success: true,
         message: 'Member dashboard data retrieved successfully',
         data: {
           summary: {
-            totalSpent,
-            totalAllowance,
-            remainingAllowance,
+            totalSpent: totalSpentAll,
+            totalAllowance: totalAllowanceAll,
+            remainingAllowance: remainingAllowanceAll,
             pendingApprovals,
           },
+          subMemberBreakdown,
           clubs: clubs.map((club: any) => ({
             id: club.id,
             name: club.name,

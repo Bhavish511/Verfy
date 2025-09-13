@@ -373,8 +373,7 @@
       "createdAt": "2025-09-10T15:45:00.000Z"
     }
   ],
-  "flagCharges": [
-  ],
+  "flagCharges": [],
   "daily_expenses": [
     {
       "id": "1",
@@ -603,6 +602,16 @@
     }
   ],
   "invitationCode": [
+    {
+      "id": "crfenh2ue",
+      "invitationCode": "verfy-jqnp",
+      "subMemberId": "012d",
+      "memberId": "101",
+      "status": "active",
+      "expiresAt": "2025-09-20T14:56:50.243Z",
+      "createdAt": "2025-09-13T14:56:50.246Z",
+      "updatedAt": "2025-09-13T14:56:50.246Z"
+    }
   ],
   "feedbacks": [
     {
@@ -647,7 +656,7 @@
       "userId": "101",
       "clubId": "1",
       "billingCycle": "monthly",
-      "parentMemberId": "101",
+      "memberId": "101",
       "totalAllowance": 5000,
       "totalSpent": 0
     },
@@ -656,7 +665,7 @@
       "userId": "101",
       "clubId": "2",
       "billingCycle": "monthly",
-      "parentMemberId": "101",
+      "memberId": "101",
       "totalAllowance": 5000,
       "totalSpent": 0
     },
@@ -665,7 +674,7 @@
       "userId": "102",
       "clubId": "1",
       "billingCycle": "monthly",
-      "parentMemberId": "102",
+      "memberId": "102",
       "totalAllowance": 5000,
       "totalSpent": 0
     },
@@ -674,7 +683,7 @@
       "userId": "102",
       "clubId": "2",
       "billingCycle": "monthly",
-      "parentMemberId": "102",
+      "memberId": "102",
       "totalAllowance": 5000,
       "totalSpent": 0
     },
@@ -683,7 +692,7 @@
       "userId": "103",
       "clubId": "1",
       "billingCycle": "monthly",
-      "parentMemberId": "103",
+      "memberId": "103",
       "totalAllowance": 5000,
       "totalSpent": 0
     },
@@ -692,7 +701,7 @@
       "userId": "103",
       "clubId": "2",
       "billingCycle": "monthly",
-      "parentMemberId": "103",
+      "memberId": "103",
       "totalAllowance": 5000,
       "totalSpent": 0
     },
@@ -701,7 +710,7 @@
       "userId": "104",
       "clubId": "1",
       "billingCycle": "monthly",
-      "parentMemberId": "104",
+      "memberId": "104",
       "totalAllowance": 5000,
       "totalSpent": 0
     },
@@ -710,7 +719,7 @@
       "userId": "104",
       "clubId": "2",
       "billingCycle": "monthly",
-      "parentMemberId": "104",
+      "memberId": "104",
       "totalAllowance": 5000,
       "totalSpent": 0
     },
@@ -719,7 +728,7 @@
       "userId": "105",
       "clubId": "1",
       "billingCycle": "monthly",
-      "parentMemberId": "105",
+      "memberId": "105",
       "totalAllowance": 5000,
       "totalSpent": 0
     },
@@ -728,7 +737,7 @@
       "userId": "105",
       "clubId": "2",
       "billingCycle": "monthly",
-      "parentMemberId": "105",
+      "memberId": "105",
       "totalAllowance": 5000,
       "totalSpent": 0
     },
@@ -737,7 +746,7 @@
       "userId": "106",
       "clubId": "1",
       "billingCycle": "monthly",
-      "parentMemberId": "106",
+      "memberId": "106",
       "totalAllowance": 5000,
       "totalSpent": 0
     },
@@ -746,7 +755,7 @@
       "userId": "106",
       "clubId": "2",
       "billingCycle": "monthly",
-      "parentMemberId": "106",
+      "memberId": "106",
       "totalAllowance": 5000,
       "totalSpent": 0
     },
@@ -755,7 +764,7 @@
       "userId": "107",
       "clubId": "1",
       "billingCycle": "monthly",
-      "parentMemberId": "107",
+      "memberId": "107",
       "totalAllowance": 5000,
       "totalSpent": 0
     },
@@ -764,7 +773,7 @@
       "userId": "107",
       "clubId": "2",
       "billingCycle": "monthly",
-      "parentMemberId": "107",
+      "memberId": "107",
       "totalAllowance": 5000,
       "totalSpent": 0
     },
@@ -773,7 +782,7 @@
       "userId": "108",
       "clubId": "1",
       "billingCycle": "monthly",
-      "parentMemberId": "108",
+      "memberId": "108",
       "totalAllowance": 5000,
       "totalSpent": 0
     },
@@ -782,7 +791,7 @@
       "userId": "108",
       "clubId": "2",
       "billingCycle": "monthly",
-      "parentMemberId": "108",
+      "memberId": "108",
       "totalAllowance": 5000,
       "totalSpent": 0
     },
@@ -791,7 +800,7 @@
       "userId": "109",
       "clubId": "1",
       "billingCycle": "monthly",
-      "parentMemberId": "109",
+      "memberId": "109",
       "totalAllowance": 5000,
       "totalSpent": 0
     },
@@ -800,7 +809,7 @@
       "userId": "109",
       "clubId": "2",
       "billingCycle": "monthly",
-      "parentMemberId": "109",
+      "memberId": "109",
       "totalAllowance": 5000,
       "totalSpent": 0
     },
@@ -809,7 +818,7 @@
       "userId": "110",
       "clubId": "1",
       "billingCycle": "monthly",
-      "parentMemberId": "110",
+      "memberId": "110",
       "totalAllowance": 5000,
       "totalSpent": 0
     },
@@ -818,7 +827,7 @@
       "userId": "110",
       "clubId": "2",
       "billingCycle": "monthly",
-      "parentMemberId": "110",
+      "memberId": "110",
       "totalAllowance": 5000,
       "totalSpent": 0
     },
@@ -827,7 +836,7 @@
       "userId": "1",
       "clubId": "1",
       "billingCycle": "monthly",
-      "parentMemberId": "1",
+      "memberId": "1",
       "totalAllowance": 5000,
       "totalSpent": 3100
     },
@@ -836,7 +845,7 @@
       "userId": "1",
       "clubId": "2",
       "billingCycle": "monthly",
-      "parentMemberId": "1",
+      "memberId": "1",
       "totalAllowance": 5000,
       "totalSpent": 265
     },
@@ -845,7 +854,7 @@
       "userId": "012d",
       "clubId": "1",
       "billingCycle": "monthly",
-      "parentMemberId": "1",
+      "memberId": "1",
       "totalAllowance": 1500,
       "totalSpent": 0
     },
@@ -854,7 +863,7 @@
       "userId": "012d",
       "clubId": "2",
       "billingCycle": "monthly",
-      "parentMemberId": "1",
+      "memberId": "1",
       "totalAllowance": 1500,
       "totalSpent": 0
     }

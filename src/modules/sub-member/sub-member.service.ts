@@ -414,7 +414,7 @@ export class SubMemberService {
       if (!user) throw new Error('Unauthorized');
 
       const userId = String(user.id);
-      const parentMemberId =
+      const memberId =
         user.parentId != null ? String(user.parentId) : null;
       const currentClubId = String(user.currently_at);
 
@@ -495,14 +495,14 @@ export class SubMemberService {
       if (!user) throw new Error('Unauthorized');
 
       const userId = String(user.id);
-      const parentMemberId = user.parentId ? String(user.parentId) : userId;
+      const memberId = user.parentId ? String(user.parentId) : userId;
       const currentClubId = String(user.currently_at);
 
       // 1. Fetch everything in parallel
       const [clubs, transactions, userClubRecords, clubDetails] =
         await Promise.all([
           // parentMember’s clubs (if sub-member, show parent’s clubs)
-          this.jsonServerService.getClubsForUser(parentMemberId),
+          this.jsonServerService.getClubsForUser(memberId),
           this.jsonServerService.getTransactions({
             userId,
             clubId: currentClubId,
