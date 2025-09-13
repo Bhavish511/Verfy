@@ -533,8 +533,7 @@ export class TransactionsService {
       if (!transaction) {
         throw new BadRequestException('Transaction not found');
       }
-      console.log(transaction);
-      
+
       // 3. Ensure the transaction belongs to this member or submember
       const allUsers = await this.jsonServerService.getUsers();
       const subMembers = allUsers.filter(
@@ -555,10 +554,7 @@ export class TransactionsService {
 
       // 4. Validation checks
       if (transaction.verifyCharge) {
-        console.log("verified");
-        
         throw new BadRequestException('Transaction is already verified');
-
       }
 
       // ✅ Case A: Pending → approve directly
@@ -567,8 +563,6 @@ export class TransactionsService {
       }
       // ✅ Case B: Refused + flagged → remove flagCharge
       else if (transaction.status === 'refused' && transaction.flagChargeId) {
-        console.log("refused");
-        
         const flagCharges = await this.jsonServerService.getFlagCharges({
           transactionId: transaction.id,
         });
@@ -591,8 +585,16 @@ export class TransactionsService {
           verifyCharge: true,
           flagChargeId: false,
           status: 'approved',
+          // ⚡ Preserve original date, only update `updatedAt`
+          date: transaction.date,
+          createdAt: transaction.createdAt,
           updatedAt: new Date().toISOString(),
         },
+      );
+
+      // 6. Attach userName from the user list
+      const userInfo = allUsers.find(
+        (u: any) => String(u.id) === String(updatedTransaction.userId),
       );
 
       return {
@@ -601,7 +603,10 @@ export class TransactionsService {
           transaction.status === 'refused'
             ? 'Flagged charge verified and approved'
             : 'Charge verified successfully',
-        data: updatedTransaction,
+        data: {
+          ...updatedTransaction,
+          userName: userInfo?.fullname || userInfo?.userName || null,
+        },
       };
     } catch (error) {
       if (

@@ -119,39 +119,70 @@ export class AuthService {
       throw new InternalServerErrorException(error.message);
     }
   }
-  // Verify sub-member credentials (Step 1) - ROLE CHECK HERE
-  async verifySubMemberCredentials(
-    email: string,
-    password: string,
-  ): Promise<{
-    success: boolean;
-    message: string;
-    data: { userId: string | number; email: string; role: string };
-  }> {
+  // Verify sub-member credentials (Step 1) - ROLE + INVITATION STATUS CHECK
+  async verifySubMemberCredentials(email: string, password: string) {
     try {
       if (!email || !password) {
         throw new BadRequestException('Email and password are required!');
       }
 
-      const users = await this.jsonServerService.getUsers({ email });
+      const users = await this.jsonServerService.getUsers({ email: email });
       const user = users[0] as User;
+      console.log(users);
+      
 
-      if (!user) {
+      if (!users || user.password !== password) {
         throw new BadRequestException('Incorrect email or password!');
       }
 
-      if (user.password !== password) {
-        throw new BadRequestException('Incorrect email or password!');
-      }
-
-      // ✅ ROLE CHECK - Only here, not in completeLogin
+      // ✅ Role check
       if (user.roles !== 'submember') {
         throw new BadRequestException('This endpoint is only for sub-members!');
       }
 
+      // ✅ Check invitation code for this submember
+      const invitationCodes = await this.jsonServerService.getInvitationCodes({
+        subMemberId: user.id,
+      });
+
+      if (invitationCodes.length > 0) {
+        const match = invitationCodes[0] as InvitationCode;
+        const now = new Date();
+        const expiresAt = new Date(match.expiresAt);
+
+        if (now > expiresAt) {
+          await this.jsonServerService.updateInvitationCode(match.id, {
+            status: 'expired',
+            updatedAt: now.toISOString(),
+          });
+        } else if (match.status === 'used') {
+          // ✅ Already used and valid → full login here
+          const accessToken = jwt.sign(
+            { id: user.id },
+            process.env.ACCESS_TOKEN_SECRET!,
+            { expiresIn: '1d' },
+          );
+
+          // Remove password before returning
+          const { password: _, ...userWithoutPassword } = user;
+
+          return {
+            success: true,
+            message: 'Sub-member login successful!',
+            skipInvitation: true,
+            data: {
+              user: userWithoutPassword,
+              accessToken,
+            },
+          };
+        }
+      }
+
+      // Default: verified but must still provide invitation code in Step 2
       return {
         success: true,
         message: 'Credentials verified. Please provide invitation code.',
+        skipInvitation: false,
         data: {
           userId: user.id,
           email: user.email,
@@ -227,10 +258,10 @@ export class AuthService {
       }
 
       // Mark invitation code as used
-      // await this.jsonServerService.updateInvitationCode(match.id, {
-      //   status: 'used',
-      //   usedAt: now.toISOString(),
-      // });
+      await this.jsonServerService.updateInvitationCode(match.id, {
+        status: 'used',
+        usedAt: now.toISOString(),
+      });
 
       const accessToken = jwt.sign(
         { id: user.id },
@@ -246,6 +277,7 @@ export class AuthService {
       return {
         success: true,
         message: 'Sub-member login successful!',
+        skipInvitation: true,
         data: {
           user: userWithoutPassword,
           accessToken,

@@ -2,23 +2,20 @@ import {
   Injectable,
   UnauthorizedException,
   BadRequestException,
+  InternalServerErrorException
 } from '@nestjs/common';
 import { CreateFlagChargeDto } from './dto/create-flag-charge.dto';
-import { UpdateFlagChargeDto } from './dto/update-flag-charge.dto';
-import { HttpService } from '@nestjs/axios';
-import { firstValueFrom } from 'rxjs';
 import { JsonServerService } from '../../services/json-server.service';
 import { uploadFileHandler } from 'src/utils/uploadFileHandler';
 
 @Injectable()
 export class FlagChargeService {
   constructor(
-    private readonly httpService: HttpService,
     private readonly jsonServerService: JsonServerService,
   ) {}
 
   async create(
-    { reasons, comment, file }: CreateFlagChargeDto,
+    { reasons, comment }: CreateFlagChargeDto,
     id: string,
     req,
     uploadedFile?: Express.Multer.File,
@@ -27,12 +24,14 @@ export class FlagChargeService {
       const userId = req.user.id;
       const userRole = req.user.roles;
 
+      // 1. Get transaction
       const transaction = await this.jsonServerService.getTransaction(id);
-      console.log(transaction);
+      if (!transaction) {
+        throw new BadRequestException('Transaction not found');
+      }
 
-      // Check authorization based on role
+      // 2. Role-based authorization
       if (userRole === 'member') {
-        // Members can flag charges for themselves or their sub-members
         const allUsers = await this.jsonServerService.getUsers();
         const subMembers = allUsers.filter(
           (u: any) =>
@@ -50,14 +49,16 @@ export class FlagChargeService {
           );
         }
       } else if (userRole === 'submember') {
-        // Sub-members can only flag their own charges
         if (String(transaction.userId) !== String(userId)) {
           throw new UnauthorizedException('You can only flag your own charges');
         }
       }
 
-      // Allow flagging of pending transactions and verified transactions
-      if (transaction.status !== 'pending' && transaction.status !== 'approved') {
+      // 3. Validation: only pending or approved can be flagged
+      if (
+        transaction.status !== 'pending' &&
+        transaction.status !== 'approved'
+      ) {
         throw new BadRequestException(
           'Only pending or approved transactions can be flagged',
         );
@@ -67,16 +68,20 @@ export class FlagChargeService {
         throw new BadRequestException('Transaction is already flagged');
       }
 
-      // Handle file upload if provided
+      // 4. Handle file upload
       let filePath: string | undefined;
       if (uploadedFile) {
-        const uploadResult = uploadFileHandler(uploadedFile.originalname, uploadedFile);
+        const uploadResult = uploadFileHandler(
+          uploadedFile.originalname,
+          uploadedFile,
+        );
         if (!uploadResult.success) {
           throw new BadRequestException(uploadResult.message);
         }
         filePath = uploadResult.data?.filePath;
       }
 
+      // 5. Create flag charge record
       const flagCharge = await this.jsonServerService.createFlagCharge({
         reasons,
         comment,
@@ -87,30 +92,43 @@ export class FlagChargeService {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
+
+      // 6. Update transaction
       const updatedTransaction = await this.jsonServerService.updateTransaction(
         transaction.id,
         {
           flagChargeId: flagCharge.id,
           status: 'refused',
+          verifyCharge:false,
+          date: transaction.date, // preserve original date
+          createdAt: transaction.createdAt,
           updatedAt: new Date().toISOString(),
         },
+      );
+
+      // 7. Attach userName to transaction
+      const allUsers = await this.jsonServerService.getUsers();
+      const userInfo = allUsers.find(
+        (u: any) => String(u.id) === String(updatedTransaction.userId),
       );
 
       return {
         success: true,
         message: 'Charge flagged successfully',
-        // data: {
-        //   transaction: updatedTransaction,
-        //   flagCharge,
-        // },
+        data: {
+          ...updatedTransaction,
+          userName: userInfo?.fullname || userInfo?.userName || null,
+        },
       };
     } catch (error) {
-      return {
-        success: false,
-        message: 'Failed to flag charge',
-        data: null,
-        error: error.message,
-      };
+      if (
+        error instanceof BadRequestException ||
+        error instanceof UnauthorizedException
+      ) {
+        throw error;
+      }
+
+      throw new InternalServerErrorException(error.message);
     }
   }
 
