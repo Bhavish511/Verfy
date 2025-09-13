@@ -408,19 +408,17 @@ export class TransactionsService {
         transactions = await this.jsonServerService.getTransactions({
           userId,
           clubId: user.currently_at,
-        });
+        });        
       }
-
       // Apply filters
       if (filters.status) {
         transactions = transactions.filter(
           (tx: any) => tx.status === filters.status,
         );
       }
-
-      if (filters.category) {
-        transactions = transactions.filter(
-          (tx: any) => tx.category === filters.category,
+      if (filters.category && filters.category.length > 0) {
+        transactions = transactions.filter((tx) =>
+          filters.category.includes(tx.category),
         );
       }
 
@@ -432,31 +430,56 @@ export class TransactionsService {
 
       // Date range filtering
       if (filters.dateRange) {
+        console.log('Date Range: ' + filters.dateRange);
+
         const now = new Date();
-        let startDate = new Date();
+        let startDate: Date;
+        let endDate: Date = now; // default endDate is now
 
         switch (filters.dateRange) {
           case 'last7days':
+            startDate = new Date(now);
             startDate.setDate(now.getDate() - 7);
+            startDate.setHours(0, 0, 0, 0); // start of day 7 days ago
             break;
+
           case 'thismonth':
             startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+            startDate.setHours(0, 0, 0, 0);
             break;
+
           case 'last3months':
-            startDate.setMonth(now.getMonth() - 3);
+            startDate = new Date(now.getFullYear(), now.getMonth() - 3, 1);
+            startDate.setHours(0, 0, 0, 0);
             break;
+
           case 'custom':
             if (filters.fromDate && filters.toDate) {
               startDate = new Date(filters.fromDate);
-              const endDate = new Date(filters.toDate);
-              transactions = transactions.filter((tx: any) => {
-                const ts = tx.createdAt ?? tx.date ?? tx.updatedAt;
-                const txDate = new Date(ts);
-                return txDate >= startDate && txDate <= endDate;
-              });
+              startDate.setHours(0, 0, 0, 0); // start of fromDate
+
+              endDate = new Date(filters.toDate);
+              endDate.setHours(23, 59, 59, 999); // end of toDate
+
+              console.log('Custom startDate: ' + startDate);
+              console.log('Custom endDate: ' + endDate);
+            } else {
+              // If custom range is invalid, skip filtering
+              console.warn('Custom date range invalid, skipping date filter');
+              return transactions;
             }
             break;
+
+          default:
+            console.warn('Unknown dateRange, skipping date filter');
         }
+
+        // Filter transactions based on calculated startDate and endDate
+        transactions = transactions.filter((tx: any) => {
+          const ts = tx.createdAt ?? tx.date ?? tx.updatedAt;
+          const txDate = new Date(ts);
+          return txDate >= startDate && txDate <= endDate;
+        });
 
         if (filters.dateRange !== 'custom') {
           transactions = transactions.filter((tx: any) => {

@@ -373,7 +373,8 @@
       "createdAt": "2025-09-10T15:45:00.000Z"
     }
   ],
-  "flagCharges": [],
+  "flagCharges": [
+  ],
   "daily_expenses": [
     {
       "id": "1",
@@ -602,16 +603,6 @@
     }
   ],
   "invitationCode": [
-    {
-      "id": "982e",
-      "invitationCode": "verfy-0lxn",
-      "subMemberId": "012d",
-      "memberId": "1",
-      "status": "active",
-      "expiresAt": "2026-02-19T23:59:59.000Z",
-      "createdAt": "2025-01-19T11:30:00.000Z",
-      "usedAt": null
-    }
   ],
   "feedbacks": [
     {
