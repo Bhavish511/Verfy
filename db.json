@@ -603,16 +603,6 @@
   ],
   "invitationCode": [
     {
-      "id": "48e9",
-      "invitationCode": "verfy74lu",
-      "subMemberId": "012d",
-      "memberId": "1",
-      "status": "active",
-      "expiresAt": "2025-02-15T23:59:59.000Z",
-      "createdAt": "2024-01-16T14:20:00.000Z",
-      "usedAt": null
-    },
-    {
       "id": "982e",
       "invitationCode": "verfy-0lxn",
       "subMemberId": "012d",

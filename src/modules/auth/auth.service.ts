@@ -149,7 +149,8 @@ export class AuthService {
         const match = invitationCodes[0] as InvitationCode;
         const now = new Date();
         const expiresAt = new Date(match.expiresAt);
-
+        console.log(match);
+        
         if (now > expiresAt) {
           await this.jsonServerService.updateInvitationCode(match.id, {
             status: 'expired',
