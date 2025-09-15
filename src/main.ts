@@ -26,6 +26,7 @@ async function bootstrap() {
 
   console.log(`🚀 NestJS server running on port ${PORT}`);
 }
+    // "postbuild": "node scripts/postbuild-copy.js"
 
 bootstrap().catch(err => {
   console.error('Error starting server:', err);
