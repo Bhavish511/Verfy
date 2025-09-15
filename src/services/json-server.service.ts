@@ -19,7 +19,7 @@ export class JsonServerService {
   private readonly logger = new Logger(JsonServerService.name);
   private readonly sourcePath = path.join(__dirname, '../db.json');
   private readonly dbPath = process.env.VERCEL
-    ? path.join('/tmp', 'db.json')
+  ? path.join(process.cwd(), 'db.json')
     : path.join(process.cwd(), 'src', 'db.json');
   private data: DatabaseData;
 
