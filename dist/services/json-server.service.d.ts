@@ -11,6 +11,7 @@ export interface DatabaseData {
 }
 export declare class JsonServerService {
     private readonly logger;
+    private readonly sourcePath;
     private readonly dbPath;
     private data;
     constructor();

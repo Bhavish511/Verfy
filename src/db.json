@@ -1,0 +1,980 @@
+{
+  "users": [
+    {
+      "id": "101",
+      "fullname": "Primary User 01",
+      "email": "primaryuser01@gmail.com",
+      "password": "password12345",
+      "profilePic": null,
+      "under12": false,
+      "relation": null,
+      "currently_at": "2",
+      "roles": "member",
+      "phone": "+1-555-1001",
+      "address": "101 Main St, City, Country",
+      "createdAt": "2025-01-01T10:00:00.000Z",
+      "updatedAt": "2025-09-15T09:44:38.792Z"
+    },
+    {
+      "id": "102",
+      "fullname": "Primary User 02",
+      "email": "primaryuser02@gmail.com",
+      "password": "password12345",
+      "profilePic": null,
+      "under12": false,
+      "relation": null,
+      "currently_at": "1",
+      "roles": "member",
+      "phone": "+1-555-1002",
+      "address": "102 Main St, City, Country",
+      "createdAt": "2025-01-02T10:00:00.000Z",
+      "updatedAt": "2025-01-02T10:00:00.000Z"
+    },
+    {
+      "id": "103",
+      "fullname": "Primary User 03",
+      "email": "primaryuser03@gmail.com",
+      "password": "password12345",
+      "profilePic": null,
+      "under12": false,
+      "relation": null,
+      "currently_at": "1",
+      "roles": "member",
+      "phone": "+1-555-1003",
+      "address": "103 Main St, City, Country",
+      "createdAt": "2025-01-03T10:00:00.000Z",
+      "updatedAt": "2025-01-03T10:00:00.000Z"
+    },
+    {
+      "id": "104",
+      "fullname": "Primary User 04",
+      "email": "primaryuser04@gmail.com",
+      "password": "password12345",
+      "profilePic": null,
+      "under12": false,
+      "relation": null,
+      "currently_at": "1",
+      "roles": "member",
+      "phone": "+1-555-1004",
+      "address": "104 Main St, City, Country",
+      "createdAt": "2025-01-04T10:00:00.000Z",
+      "updatedAt": "2025-01-04T10:00:00.000Z"
+    },
+    {
+      "id": "105",
+      "fullname": "Primary User 05",
+      "email": "primaryuser05@gmail.com",
+      "password": "password12345",
+      "profilePic": null,
+      "under12": false,
+      "relation": null,
+      "currently_at": "1",
+      "roles": "member",
+      "phone": "+1-555-1005",
+      "address": "105 Main St, City, Country",
+      "createdAt": "2025-01-05T10:00:00.000Z",
+      "updatedAt": "2025-01-05T10:00:00.000Z"
+    },
+    {
+      "id": "106",
+      "fullname": "Primary User 06",
+      "email": "primaryuser06@gmail.com",
+      "password": "password12345",
+      "profilePic": null,
+      "under12": false,
+      "relation": null,
+      "currently_at": "1",
+      "roles": "member",
+      "phone": "+1-555-1006",
+      "address": "106 Main St, City, Country",
+      "createdAt": "2025-01-06T10:00:00.000Z",
+      "updatedAt": "2025-01-06T10:00:00.000Z"
+    },
+    {
+      "id": "107",
+      "fullname": "Primary User 07",
+      "email": "primaryuser07@gmail.com",
+      "password": "password12345",
+      "profilePic": null,
+      "under12": false,
+      "relation": null,
+      "currently_at": "1",
+      "roles": "member",
+      "phone": "+1-555-1007",
+      "address": "107 Main St, City, Country",
+      "createdAt": "2025-01-07T10:00:00.000Z",
+      "updatedAt": "2025-01-07T10:00:00.000Z"
+    },
+    {
+      "id": "108",
+      "fullname": "Primary User 08",
+      "email": "primaryuser08@gmail.com",
+      "password": "password12345",
+      "profilePic": null,
+      "under12": false,
+      "relation": null,
+      "currently_at": "1",
+      "roles": "member",
+      "phone": "+1-555-1008",
+      "address": "108 Main St, City, Country",
+      "createdAt": "2025-01-08T10:00:00.000Z",
+      "updatedAt": "2025-01-08T10:00:00.000Z"
+    },
+    {
+      "id": "109",
+      "fullname": "Primary User 09",
+      "email": "primaryuser09@gmail.com",
+      "password": "password12345",
+      "profilePic": null,
+      "under12": false,
+      "relation": null,
+      "currently_at": "1",
+      "roles": "member",
+      "phone": "+1-555-1009",
+      "address": "109 Main St, City, Country",
+      "createdAt": "2025-01-09T10:00:00.000Z",
+      "updatedAt": "2025-01-09T10:00:00.000Z"
+    },
+    {
+      "id": "110",
+      "fullname": "Primary User 10",
+      "email": "primaryuser10@gmail.com",
+      "password": "password12345",
+      "profilePic": null,
+      "under12": false,
+      "relation": null,
+      "currently_at": "1",
+      "roles": "member",
+      "phone": "+1-555-1010",
+      "address": "110 Main St, City, Country",
+      "createdAt": "2025-01-10T10:00:00.000Z",
+      "updatedAt": "2025-01-10T10:00:00.000Z"
+    },
+    {
+      "id": "1",
+      "fullname": "Touseef Ali",
+      "email": "touseef3@example.com",
+      "password": "touseef",
+      "profilePic": null,
+      "under12": null,
+      "relation": null,
+      "currently_at": "1",
+      "roles": "member",
+      "phone": "+1-555-0101",
+      "address": "123 Main St, New York, NY 10001",
+      "createdAt": "2024-01-15T10:30:00.000Z",
+      "updatedAt": "2025-09-05T16:16:56.931Z"
+    },
+    {
+      "id": "012d",
+      "fullname": "mosab",
+      "email": "mosab@gmail.com",
+      "password": "mosab",
+      "profilePic": null,
+      "under12": true,
+      "relation": "guest",
+      "allowance": 1500,
+      "currently_at": "1",
+      "roles": "submember",
+      "parentId": "1",
+      "phone": "+1-555-0102",
+      "address": "456 Oak Ave, Los Angeles, CA 90210",
+      "createdAt": "2024-01-16T14:20:00.000Z",
+      "updatedAt": "2025-09-05T13:29:50.361Z"
+    },
+    {
+      "id": "2352i24lf",
+      "fullname": "abc",
+      "email": "aaa1111111@gmail.com",
+      "password": "abc",
+      "under12": true,
+      "relation": "guest",
+      "allowance": 1500,
+      "BillingCycle": "monthly",
+      "roles": "submember",
+      "parentId": "101",
+      "currently_at": "1",
+      "createdAt": "2025-09-15T09:41:46.436Z",
+      "updatedAt": "2025-09-15T09:41:46.436Z"
+    }
+  ],
+  "clubs": [
+    {
+      "id": "1",
+      "name": "Finance Club",
+      "location": "New York",
+      "description": "Professional finance and investment club",
+      "establishedDate": "2023-01-15",
+      "createdAt": "2024-01-15T10:30:00.000Z",
+      "updatedAt": "2024-01-15T10:30:00.000Z"
+    },
+    {
+      "id": "2",
+      "name": "Marketing Club",
+      "location": "Los Angeles",
+      "description": "Digital marketing and advertising professionals",
+      "establishedDate": "2023-03-20",
+      "createdAt": "2024-01-16T14:20:00.000Z",
+      "updatedAt": "2024-01-16T14:20:00.000Z"
+    },
+    {
+      "id": "3",
+      "name": "Tech Innovation Hub",
+      "location": "Chicago",
+      "description": "Technology innovation and startup community",
+      "establishedDate": "2023-05-10",
+      "createdAt": "2024-01-17T09:15:00.000Z",
+      "updatedAt": "2024-01-17T09:15:00.000Z"
+    },
+    {
+      "id": "4",
+      "name": "Healthcare Professionals",
+      "location": "Houston",
+      "description": "Medical and healthcare professionals network",
+      "establishedDate": "2023-07-08",
+      "createdAt": "2024-01-18T16:45:00.000Z",
+      "updatedAt": "2024-01-18T16:45:00.000Z"
+    },
+    {
+      "id": "5",
+      "name": "Creative Arts Society",
+      "location": "San Francisco",
+      "description": "Artists, designers, and creative professionals",
+      "establishedDate": "2023-09-12",
+      "createdAt": "2024-01-19T11:30:00.000Z",
+      "updatedAt": "2024-01-19T11:30:00.000Z"
+    }
+  ],
+  "transactions": [
+    {
+      "id": "1",
+      "clubId": "1",
+      "bill": 250,
+      "userId": "1",
+      "memberId": "1",
+      "category": "Equipment",
+      "status": "approved",
+      "verifyCharge": true,
+      "flagChargeId": null,
+      "description": "Office supplies for Finance Club",
+      "date": "2024-01-15T10:30:00.000Z",
+      "receiptUrl": "https://example.com/receipts/receipt1.pdf",
+      "createdAt": "2024-01-15T10:30:00.000Z",
+      "updatedAt": "2024-01-15T10:30:00.000Z"
+    },
+    {
+      "id": "2",
+      "clubId": "2",
+      "bill": 200,
+      "userId": "1",
+      "memberId": "1",
+      "category": "Food",
+      "status": "approved",
+      "verifyCharge": true,
+      "flagChargeId": null,
+      "description": "Team lunch meeting",
+      "date": "2024-01-16T12:00:00.000Z",
+      "receiptUrl": "https://example.com/receipts/receipt2.pdf",
+      "createdAt": "2024-01-16T12:00:00.000Z",
+      "updatedAt": "2024-01-16T12:00:00.000Z"
+    },
+    {
+      "id": "22",
+      "clubId": "1",
+      "bill": 180,
+      "userId": "1",
+      "memberId": "1",
+      "category": "Medical",
+      "status": "approved",
+      "verifyCharge": true,
+      "flagChargeId": null,
+      "description": "Health checkup",
+      "date": "2024-01-28T10:00:00.000Z",
+      "receiptUrl": "https://example.com/receipts/receipt22.pdf",
+      "createdAt": "2025-09-01T10:00:00.000Z",
+      "updatedAt": "2024-01-28T10:00:00.000Z"
+    },
+    {
+      "id": "23",
+      "clubId": "2",
+      "bill": 65,
+      "userId": "1",
+      "memberId": "1",
+      "category": "Transportation",
+      "status": "refused",
+      "verifyCharge": false,
+      "flagChargeId": "iwvhdtahq",
+      "description": "Taxi to meeting",
+      "date": "2024-01-28T16:30:00.000Z",
+      "receiptUrl": "https://example.com/receipts/receipt23.pdf",
+      "createdAt": "2024-01-28T16:30:00.000Z",
+      "updatedAt": "2025-09-05T13:37:03.938Z"
+    },
+    {
+      "id": "31",
+      "clubId": "1",
+      "bill": 70,
+      "userId": "1",
+      "memberId": "1",
+      "category": "Food",
+      "status": "approved",
+      "verifyCharge": true,
+      "flagChargeId": null,
+      "description": "Lunch (current month)",
+      "date": "2025-09-09T12:30:00.000Z",
+      "receiptUrl": null,
+      "createdAt": "2025-09-09T12:30:00.000Z",
+      "updatedAt": "2025-09-09T12:30:00.000Z"
+    },
+    {
+      "id": "32",
+      "clubId": "1",
+      "bill": 50,
+      "userId": "1",
+      "memberId": "1",
+      "category": "Transportation",
+      "status": "approved",
+      "verifyCharge": true,
+      "flagChargeId": null,
+      "description": "Taxi (this week)",
+      "date": "2025-09-07T09:15:00.000Z",
+      "receiptUrl": null,
+      "createdAt": "2025-09-07T09:15:00.000Z",
+      "updatedAt": "2025-09-07T09:15:00.000Z"
+    },
+    {
+      "id": "35",
+      "clubId": "1",
+      "bill": 950,
+      "userId": "1",
+      "memberId": "1",
+      "category": "Travel",
+      "status": "pending",
+      "verifyCharge": false,
+      "flagChargeId": false,
+      "description": "Flight booking",
+      "date": "2025-09-10T10:00:00.000Z",
+      "receiptUrl": null,
+      "createdAt": "2025-09-10T10:00:00.000Z"
+    },
+    {
+      "id": "36",
+      "clubId": "1",
+      "bill": 400,
+      "userId": "1",
+      "memberId": "1",
+      "category": "Food",
+      "status": "pending",
+      "verifyCharge": false,
+      "flagChargeId": false,
+      "description": "Lunch with team",
+      "date": "2025-09-10T12:30:00.000Z",
+      "receiptUrl": null,
+      "createdAt": "2025-09-10T12:30:00.000Z"
+    },
+    {
+      "id": "37",
+      "clubId": "1",
+      "bill": 1200,
+      "userId": "1",
+      "memberId": "1",
+      "category": "Shopping",
+      "status": "pending",
+      "verifyCharge": false,
+      "flagChargeId": false,
+      "description": "Electronics purchase",
+      "date": "2025-09-10T15:45:00.000Z",
+      "receiptUrl": null,
+      "createdAt": "2025-09-10T15:45:00.000Z"
+    },
+    {
+      "id": "hrb0kw1z8",
+      "clubId": "1",
+      "userId": "2352i24lf",
+      "memberId": "101",
+      "bill": 450,
+      "category": "Travel",
+      "description": "Travel",
+      "status": "pending",
+      "verifyCharge": false,
+      "flagChargeId": false,
+      "date": "2025-09-15T09:41:46.446Z",
+      "createdAt": "2025-09-15T09:41:46.447Z",
+      "updatedAt": "2025-09-15T09:41:46.447Z"
+    },
+    {
+      "id": "e5idcdcpd",
+      "clubId": "1",
+      "userId": "2352i24lf",
+      "memberId": "101",
+      "bill": 300,
+      "category": "Transportation",
+      "description": "Transportation",
+      "status": "pending",
+      "verifyCharge": false,
+      "flagChargeId": false,
+      "date": "2025-09-15T09:41:46.447Z",
+      "createdAt": "2025-09-15T09:41:46.447Z",
+      "updatedAt": "2025-09-15T09:41:46.447Z"
+    },
+    {
+      "id": "2xoh33qeh",
+      "clubId": "2",
+      "userId": "2352i24lf",
+      "memberId": "101",
+      "bill": 450,
+      "category": "Travel",
+      "description": "Travel",
+      "status": "pending",
+      "verifyCharge": false,
+      "flagChargeId": false,
+      "date": "2025-09-15T09:41:46.450Z",
+      "createdAt": "2025-09-15T09:41:46.450Z",
+      "updatedAt": "2025-09-15T09:41:46.450Z"
+    },
+    {
+      "id": "6fr6u3vip",
+      "clubId": "2",
+      "userId": "2352i24lf",
+      "memberId": "101",
+      "bill": 300,
+      "category": "Transportation",
+      "description": "Transportation",
+      "status": "pending",
+      "verifyCharge": false,
+      "flagChargeId": false,
+      "date": "2025-09-15T09:41:46.450Z",
+      "createdAt": "2025-09-15T09:41:46.450Z",
+      "updatedAt": "2025-09-15T09:41:46.450Z"
+    }
+  ],
+  "flagCharges": [],
+  "daily_expenses": [
+    {
+      "id": "1",
+      "money_spent": 25,
+      "createdAt": "2024-01-15T09:00:00.000Z",
+      "userId": "1",
+      "category": "Food",
+      "description": "Morning coffee",
+      "location": "Starbucks, New York"
+    },
+    {
+      "id": "2",
+      "money_spent": 45,
+      "createdAt": "2024-01-16T12:30:00.000Z",
+      "userId": "1",
+      "category": "Food",
+      "description": "Quick lunch",
+      "location": "Café, New York"
+    },
+    {
+      "id": "3",
+      "money_spent": 30,
+      "createdAt": "2024-01-17T10:15:00.000Z",
+      "userId": "012d",
+      "category": "Food",
+      "description": "Snack break",
+      "location": "Convenience store, Los Angeles"
+    },
+    {
+      "id": "4",
+      "money_spent": 15,
+      "createdAt": "2024-01-18T13:45:00.000Z",
+      "userId": "012d",
+      "category": "Transportation",
+      "description": "Bus fare",
+      "location": "Los Angeles"
+    },
+    {
+      "id": "5",
+      "money_spent": 40,
+      "createdAt": "2024-01-19T08:30:00.000Z",
+      "userId": "2",
+      "category": "Food",
+      "description": "Breakfast",
+      "location": "Café, Chicago"
+    },
+    {
+      "id": "6",
+      "money_spent": 75,
+      "createdAt": "2024-01-28T12:30:00.000Z",
+      "userId": "012d",
+      "category": "Food",
+      "description": "Lunch with friends",
+      "location": "Restaurant, New York"
+    },
+    {
+      "id": "7",
+      "money_spent": 120,
+      "createdAt": "2024-01-28T18:00:00.000Z",
+      "userId": "012d",
+      "category": "Entertainment",
+      "description": "Movie tickets for club outing",
+      "location": "Cinema, New York"
+    },
+    {
+      "id": "8",
+      "money_spent": 50,
+      "createdAt": "2024-01-28T09:00:00.000Z",
+      "userId": "012d",
+      "category": "Transportation",
+      "description": "Bus fare to club meeting",
+      "location": "Bus Station, New York"
+    },
+    {
+      "id": "9",
+      "money_spent": 95,
+      "createdAt": "2024-01-28T19:30:00.000Z",
+      "userId": "012d",
+      "category": "Food",
+      "description": "Dinner at restaurant",
+      "location": "Restaurant, New York"
+    },
+    {
+      "id": "10",
+      "money_spent": 200,
+      "createdAt": "2024-01-28T14:15:00.000Z",
+      "userId": "012f",
+      "category": "Equipment",
+      "description": "Gaming accessories",
+      "location": "Electronics Store, New York"
+    },
+    {
+      "id": "11",
+      "money_spent": 35,
+      "createdAt": "2024-01-28T15:45:00.000Z",
+      "userId": "012f",
+      "category": "Food",
+      "description": "Coffee break",
+      "location": "Coffee Shop, New York"
+    },
+    {
+      "id": "12",
+      "money_spent": 180,
+      "createdAt": "2024-01-28T10:00:00.000Z",
+      "userId": "1",
+      "category": "Medical",
+      "description": "Health checkup",
+      "location": "Medical Center, New York"
+    },
+    {
+      "id": "13",
+      "money_spent": 65,
+      "createdAt": "2024-01-28T16:30:00.000Z",
+      "userId": "1",
+      "category": "Transportation",
+      "description": "Taxi to meeting",
+      "location": "New York"
+    },
+    {
+      "id": "14",
+      "money_spent": 110,
+      "createdAt": "2024-01-28T20:00:00.000Z",
+      "userId": "2",
+      "category": "Entertainment",
+      "description": "Concert tickets",
+      "location": "Concert Hall, Chicago"
+    },
+    {
+      "id": "15",
+      "money_spent": 40,
+      "createdAt": "2024-01-28T13:00:00.000Z",
+      "userId": "2",
+      "category": "Food",
+      "description": "Expensive lunch",
+      "location": "Restaurant, Chicago"
+    },
+    {
+      "id": "16",
+      "money_spent": 85,
+      "createdAt": "2024-01-28T08:30:00.000Z",
+      "userId": "3",
+      "category": "Transportation",
+      "description": "Train tickets",
+      "location": "Train Station, Miami"
+    },
+    {
+      "id": "17",
+      "money_spent": 150,
+      "createdAt": "2024-01-28T11:15:00.000Z",
+      "userId": "3",
+      "category": "Equipment",
+      "description": "Office supplies",
+      "location": "Office Store, Miami"
+    },
+    {
+      "id": "18",
+      "money_spent": 70,
+      "createdAt": "2024-01-28T12:45:00.000Z",
+      "userId": "4",
+      "category": "Food",
+      "description": "Team lunch",
+      "location": "Restaurant, Seattle"
+    },
+    {
+      "id": "19",
+      "money_spent": 95,
+      "createdAt": "2024-01-28T17:20:00.000Z",
+      "userId": "4",
+      "category": "Entertainment",
+      "description": "Personal entertainment",
+      "location": "Entertainment Center, Seattle"
+    },
+    {
+      "id": "20",
+      "money_spent": 55,
+      "createdAt": "2024-01-28T07:45:00.000Z",
+      "userId": "5",
+      "category": "Transportation",
+      "description": "Bus fare",
+      "location": "Bus Station, Los Angeles"
+    },
+    {
+      "id": "21",
+      "money_spent": 20,
+      "createdAt": "2024-01-20T14:20:00.000Z",
+      "userId": "2",
+      "category": "Transportation",
+      "description": "Metro card",
+      "location": "Chicago"
+    },
+    {
+      "id": "22",
+      "money_spent": 35,
+      "createdAt": "2024-01-21T11:00:00.000Z",
+      "userId": "3",
+      "category": "Food",
+      "description": "Lunch",
+      "location": "Restaurant, Houston"
+    },
+    {
+      "id": "23",
+      "money_spent": 25,
+      "createdAt": "2024-01-22T16:45:00.000Z",
+      "userId": "4",
+      "category": "Entertainment",
+      "description": "Coffee with friends",
+      "location": "Café, Chicago"
+    },
+    {
+      "id": "24",
+      "money_spent": 20,
+      "createdAt": "2024-01-23T10:00:00.000Z",
+      "userId": "5",
+      "category": "Food",
+      "description": "Snack",
+      "location": "Vending machine, Chicago"
+    },
+    {
+      "id": "25",
+      "money_spent": 15,
+      "createdAt": "2024-01-24T15:30:00.000Z",
+      "userId": "0gsh4ju6s",
+      "category": "Transportation",
+      "description": "Bus ticket",
+      "location": "Los Angeles"
+    }
+  ],
+  "invitationCode": [
+    {
+      "id": "crfenh2ue",
+      "invitationCode": "verfy-jqnp",
+      "subMemberId": "012d",
+      "memberId": "101",
+      "status": "used",
+      "expiresAt": "2025-09-20T14:56:50.243Z",
+      "createdAt": "2025-09-13T14:56:50.246Z",
+      "updatedAt": "2025-09-15T09:08:25.498Z",
+      "usedAt": "2025-09-15T09:08:25.497Z"
+    },
+    {
+      "id": "9rm38ap79",
+      "invitationCode": "verfy-zdif",
+      "subMemberId": "2352i24lf",
+      "memberId": "101",
+      "status": "used",
+      "expiresAt": "2025-09-22T09:41:46.441Z",
+      "createdAt": "2025-09-15T09:41:46.441Z",
+      "updatedAt": "2025-09-15T11:05:44.135Z",
+      "usedAt": "2025-09-15T11:05:44.135Z"
+    }
+  ],
+  "feedbacks": [
+    {
+      "id": "1",
+      "userId": "1",
+      "stars": 5,
+      "feedbackText": "Great platform! Very user-friendly and efficient.",
+      "createdAt": "2024-01-15T10:30:00.000Z",
+      "updatedAt": "2024-01-15T10:30:00.000Z"
+    },
+    {
+      "id": "2",
+      "userId": "2",
+      "stars": 4,
+      "feedbackText": "Good experience overall, could use some improvements in the transaction filtering.",
+      "createdAt": "2024-01-16T14:20:00.000Z",
+      "updatedAt": "2024-01-16T14:20:00.000Z"
+    },
+    {
+      "id": "3",
+      "userId": "012d",
+      "stars": 5,
+      "feedbackText": "Excellent service! The dashboard view is very helpful.",
+      "createdAt": "2024-01-17T09:15:00.000Z",
+      "updatedAt": "2024-01-17T09:15:00.000Z"
+    },
+    {
+      "id": "feedback_1757087252141_omqtnhfac",
+      "userId": "1",
+      "stars": 4,
+      "feedbackText": [
+        "abcddd0",
+        "aaaaa"
+      ],
+      "createdAt": "2025-09-05T15:47:32.141Z",
+      "updatedAt": "2025-09-05T15:47:32.141Z"
+    }
+  ],
+  "user_clubs": [
+    {
+      "id": "uc-101-1",
+      "userId": "101",
+      "clubId": "1",
+      "billingCycle": "monthly",
+      "memberId": "101",
+      "totalAllowance": 5000,
+      "totalSpent": 0
+    },
+    {
+      "id": "uc-101-2",
+      "userId": "101",
+      "clubId": "2",
+      "billingCycle": "monthly",
+      "memberId": "101",
+      "totalAllowance": 5000,
+      "totalSpent": 0
+    },
+    {
+      "id": "uc-102-1",
+      "userId": "102",
+      "clubId": "1",
+      "billingCycle": "monthly",
+      "memberId": "102",
+      "totalAllowance": 5000,
+      "totalSpent": 0
+    },
+    {
+      "id": "uc-102-2",
+      "userId": "102",
+      "clubId": "2",
+      "billingCycle": "monthly",
+      "memberId": "102",
+      "totalAllowance": 5000,
+      "totalSpent": 0
+    },
+    {
+      "id": "uc-103-1",
+      "userId": "103",
+      "clubId": "1",
+      "billingCycle": "monthly",
+      "memberId": "103",
+      "totalAllowance": 5000,
+      "totalSpent": 0
+    },
+    {
+      "id": "uc-103-2",
+      "userId": "103",
+      "clubId": "2",
+      "billingCycle": "monthly",
+      "memberId": "103",
+      "totalAllowance": 5000,
+      "totalSpent": 0
+    },
+    {
+      "id": "uc-104-1",
+      "userId": "104",
+      "clubId": "1",
+      "billingCycle": "monthly",
+      "memberId": "104",
+      "totalAllowance": 5000,
+      "totalSpent": 0
+    },
+    {
+      "id": "uc-104-2",
+      "userId": "104",
+      "clubId": "2",
+      "billingCycle": "monthly",
+      "memberId": "104",
+      "totalAllowance": 5000,
+      "totalSpent": 0
+    },
+    {
+      "id": "uc-105-1",
+      "userId": "105",
+      "clubId": "1",
+      "billingCycle": "monthly",
+      "memberId": "105",
+      "totalAllowance": 5000,
+      "totalSpent": 0
+    },
+    {
+      "id": "uc-105-2",
+      "userId": "105",
+      "clubId": "2",
+      "billingCycle": "monthly",
+      "memberId": "105",
+      "totalAllowance": 5000,
+      "totalSpent": 0
+    },
+    {
+      "id": "uc-106-1",
+      "userId": "106",
+      "clubId": "1",
+      "billingCycle": "monthly",
+      "memberId": "106",
+      "totalAllowance": 5000,
+      "totalSpent": 0
+    },
+    {
+      "id": "uc-106-2",
+      "userId": "106",
+      "clubId": "2",
+      "billingCycle": "monthly",
+      "memberId": "106",
+      "totalAllowance": 5000,
+      "totalSpent": 0
+    },
+    {
+      "id": "uc-107-1",
+      "userId": "107",
+      "clubId": "1",
+      "billingCycle": "monthly",
+      "memberId": "107",
+      "totalAllowance": 5000,
+      "totalSpent": 0
+    },
+    {
+      "id": "uc-107-2",
+      "userId": "107",
+      "clubId": "2",
+      "billingCycle": "monthly",
+      "memberId": "107",
+      "totalAllowance": 5000,
+      "totalSpent": 0
+    },
+    {
+      "id": "uc-108-1",
+      "userId": "108",
+      "clubId": "1",
+      "billingCycle": "monthly",
+      "memberId": "108",
+      "totalAllowance": 5000,
+      "totalSpent": 0
+    },
+    {
+      "id": "uc-108-2",
+      "userId": "108",
+      "clubId": "2",
+      "billingCycle": "monthly",
+      "memberId": "108",
+      "totalAllowance": 5000,
+      "totalSpent": 0
+    },
+    {
+      "id": "uc-109-1",
+      "userId": "109",
+      "clubId": "1",
+      "billingCycle": "monthly",
+      "memberId": "109",
+      "totalAllowance": 5000,
+      "totalSpent": 0
+    },
+    {
+      "id": "uc-109-2",
+      "userId": "109",
+      "clubId": "2",
+      "billingCycle": "monthly",
+      "memberId": "109",
+      "totalAllowance": 5000,
+      "totalSpent": 0
+    },
+    {
+      "id": "uc-110-1",
+      "userId": "110",
+      "clubId": "1",
+      "billingCycle": "monthly",
+      "memberId": "110",
+      "totalAllowance": 5000,
+      "totalSpent": 0
+    },
+    {
+      "id": "uc-110-2",
+      "userId": "110",
+      "clubId": "2",
+      "billingCycle": "monthly",
+      "memberId": "110",
+      "totalAllowance": 5000,
+      "totalSpent": 0
+    },
+    {
+      "id": "uc-1-1",
+      "userId": "1",
+      "clubId": "1",
+      "billingCycle": "monthly",
+      "memberId": "1",
+      "totalAllowance": 5000,
+      "totalSpent": 3100
+    },
+    {
+      "id": "uc-1-2",
+      "userId": "1",
+      "clubId": "2",
+      "billingCycle": "monthly",
+      "memberId": "1",
+      "totalAllowance": 5000,
+      "totalSpent": 265
+    },
+    {
+      "id": "uc-012d-1",
+      "userId": "012d",
+      "clubId": "1",
+      "billingCycle": "monthly",
+      "memberId": "1",
+      "totalAllowance": 1500,
+      "totalSpent": 0
+    },
+    {
+      "id": "uc-012d-2",
+      "userId": "012d",
+      "clubId": "2",
+      "billingCycle": "monthly",
+      "memberId": "1",
+      "totalAllowance": 1500,
+      "totalSpent": 0
+    },
+    {
+      "id": "xaxad7hof",
+      "userId": "2352i24lf",
+      "clubId": "1",
+      "billingCycle": "monthly",
+      "memberId": "101",
+      "totalAllowance": 1500,
+      "totalSpent": 750,
+      "createdAt": "2025-09-15T09:41:46.438Z",
+      "updatedAt": "2025-09-15T09:41:46.449Z"
+    },
+    {
+      "id": "4xmfzkjnr",
+      "userId": "2352i24lf",
+      "clubId": "2",
+      "billingCycle": "monthly",
+      "memberId": "101",
+      "totalAllowance": 1500,
+      "totalSpent": 750,
+      "createdAt": "2025-09-15T09:41:46.440Z",
+      "updatedAt": "2025-09-15T09:41:46.451Z"
+    }
+  ]
+}

@@ -49,7 +49,10 @@ const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
 let JsonServerService = JsonServerService_1 = class JsonServerService {
     logger = new common_1.Logger(JsonServerService_1.name);
-    dbPath = path.join(process.env.VERCEL ? '/tmp' : process.cwd(), 'db.json');
+    sourcePath = path.join(__dirname, '../db.json');
+    dbPath = process.env.VERCEL
+        ? path.join('/tmp', 'db.json')
+        : path.join(process.cwd(), 'src', 'db.json');
     data;
     constructor() {
         this.loadDatabase();
@@ -71,7 +74,7 @@ let JsonServerService = JsonServerService_1 = class JsonServerService {
                     daily_expenses: [],
                     invitationCode: [],
                     feedbacks: [],
-                    user_clubs: []
+                    user_clubs: [],
                 };
                 this.saveDatabase();
                 this.logger.log('New database created');
@@ -101,7 +104,7 @@ let JsonServerService = JsonServerService_1 = class JsonServerService {
     }
     async findOne(collection, id) {
         const items = this.data[collection];
-        const item = items.find(item => String(item.id) === String(id));
+        const item = items.find((item) => String(item.id) === String(id));
         if (!item) {
             throw new Error(`Item with id ${id} not found in ${collection}`);
         }
@@ -122,7 +125,7 @@ let JsonServerService = JsonServerService_1 = class JsonServerService {
                 id: this.generateId(),
                 ...data,
                 createdAt: new Date().toISOString(),
-                updatedAt: new Date().toISOString()
+                updatedAt: new Date().toISOString(),
             };
             this.data[collection].push(newItem);
             this.saveDatabase();
@@ -136,14 +139,14 @@ let JsonServerService = JsonServerService_1 = class JsonServerService {
     }
     async update(collection, id, data) {
         const items = this.data[collection];
-        const index = items.findIndex(item => String(item.id) === String(id));
+        const index = items.findIndex((item) => String(item.id) === String(id));
         if (index === -1) {
             throw new Error(`Item with id ${id} not found in ${collection}`);
         }
         const updatedItem = {
             ...items[index],
             ...data,
-            updatedAt: new Date().toISOString()
+            updatedAt: new Date().toISOString(),
         };
         this.data[collection][index] = updatedItem;
         this.saveDatabase();
@@ -151,7 +154,7 @@ let JsonServerService = JsonServerService_1 = class JsonServerService {
     }
     async delete(collection, id) {
         const items = this.data[collection];
-        const index = items.findIndex(item => String(item.id) === String(id));
+        const index = items.findIndex((item) => String(item.id) === String(id));
         if (index === -1) {
             throw new Error(`Item with id ${id} not found in ${collection}`);
         }
@@ -165,15 +168,17 @@ let JsonServerService = JsonServerService_1 = class JsonServerService {
         if (!query || Object.keys(query).length === 0) {
             return items;
         }
-        return items.filter(item => {
-            return Object.keys(query).every(key => {
+        return items.filter((item) => {
+            return Object.keys(query).every((key) => {
                 const queryValue = query[key];
                 const itemValue = item[key];
                 if (queryValue === null || queryValue === undefined) {
                     return itemValue === queryValue;
                 }
                 if (typeof queryValue === 'string') {
-                    return String(itemValue).toLowerCase().includes(queryValue.toLowerCase());
+                    return String(itemValue)
+                        .toLowerCase()
+                        .includes(queryValue.toLowerCase());
                 }
                 return String(itemValue) === String(queryValue);
             });
@@ -192,15 +197,21 @@ let JsonServerService = JsonServerService_1 = class JsonServerService {
             daily_expenses: ['money_spent', 'userId'],
             invitationCode: ['invitationCode', 'memberId'],
             feedbacks: ['userId', 'stars', 'feedbackText'],
-            user_clubs: ['userId', 'clubId', 'memberId', 'totalAllowance', 'billingCycle']
+            user_clubs: [
+                'userId',
+                'clubId',
+                'memberId',
+                'totalAllowance',
+                'billingCycle',
+            ],
         };
         const fields = requiredFields[collection] || [];
-        const missingFields = fields.filter(field => !data[field]);
+        const missingFields = fields.filter((field) => !data[field]);
         if (missingFields.length > 0) {
             throw new Error(`Missing required fields for ${collection}: ${missingFields.join(', ')}`);
         }
         if (collection === 'users' && data.email) {
-            const existingUser = this.data.users.find(user => user.email === data.email);
+            const existingUser = this.data.users.find((user) => user.email === data.email);
             if (existingUser) {
                 throw new Error('User with this email already exists');
             }
@@ -223,7 +234,7 @@ let JsonServerService = JsonServerService_1 = class JsonServerService {
             invitationCode: this.data.invitationCode.length,
             feedbacks: this.data.feedbacks.length,
             user_clubs: this.data.user_clubs.length,
-            lastUpdated: new Date().toISOString()
+            lastUpdated: new Date().toISOString(),
         };
         return stats;
     }
@@ -231,7 +242,7 @@ let JsonServerService = JsonServerService_1 = class JsonServerService {
         const backupData = {
             ...this.data,
             backupCreatedAt: new Date().toISOString(),
-            version: '1.0.0'
+            version: '1.0.0',
         };
         const backupPath = path.join(process.cwd(), `db-backup-${Date.now()}.json`);
         fs.writeFileSync(backupPath, JSON.stringify(backupData, null, 2));

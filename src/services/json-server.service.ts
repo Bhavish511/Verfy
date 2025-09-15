@@ -17,7 +17,10 @@ export interface DatabaseData {
 @Injectable()
 export class JsonServerService {
   private readonly logger = new Logger(JsonServerService.name);
-  private readonly dbPath = path.join(process.env.VERCEL ? '/tmp' : process.cwd(), 'db.json');
+  private readonly sourcePath = path.join(__dirname, '../db.json');
+  private readonly dbPath = process.env.VERCEL
+    ? path.join('/tmp', 'db.json')
+    : path.join(process.cwd(), 'src', 'db.json');
   private data: DatabaseData;
 
   constructor() {
@@ -41,7 +44,7 @@ export class JsonServerService {
           daily_expenses: [],
           invitationCode: [],
           feedbacks: [],
-          user_clubs: []
+          user_clubs: [],
         };
         this.saveDatabase();
         this.logger.log('New database created');
@@ -65,54 +68,58 @@ export class JsonServerService {
   // Generic CRUD operations
   async findAll(collection: keyof DatabaseData, query?: any): Promise<any[]> {
     let items = [...this.data[collection]];
-    
+
     if (query) {
       items = this.filterItems(items, query);
     }
-    
+
     return items;
   }
 
-  async findOne(collection: keyof DatabaseData, id: string | number): Promise<any> {
+  async findOne(
+    collection: keyof DatabaseData,
+    id: string | number,
+  ): Promise<any> {
     const items = this.data[collection];
-    const item = items.find(item => String(item.id) === String(id));
+    const item = items.find((item) => String(item.id) === String(id));
     if (!item) {
       throw new Error(`Item with id ${id} not found in ${collection}`);
     }
-    
+
     return item;
   }
   async findOneByField<T extends keyof DatabaseData>(
-  collection: T,
-  field: keyof DatabaseData[T][number],
-  value: string | number,
+    collection: T,
+    field: keyof DatabaseData[T][number],
+    value: string | number,
   ): Promise<DatabaseData[T][number]> {
     const items = this.data[collection];
     const item = items.find((i: any) => String(i[field]) === String(value));
 
     if (!item) {
-      throw new Error(`Item with ${String(field)}=${value} not found in ${collection}`);
+      throw new Error(
+        `Item with ${String(field)}=${value} not found in ${collection}`,
+      );
     }
 
     return item;
   }
 
-
   async create(collection: keyof DatabaseData, data: any): Promise<any> {
     try {
       // Validate required fields based on collection type
       this.validateCreateData(collection, data);
-      
+
       const newItem = {
         id: this.generateId(),
         ...data,
         createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+        updatedAt: new Date().toISOString(),
       };
-      
+
       this.data[collection].push(newItem);
       this.saveDatabase();
-      
+
       this.logger.log(`Created new ${collection} with ID: ${newItem.id}`);
       return newItem;
     } catch (error) {
@@ -121,40 +128,50 @@ export class JsonServerService {
     }
   }
 
-  async update(collection: keyof DatabaseData, id: string | number, data: any): Promise<any> {
+  async update(
+    collection: keyof DatabaseData,
+    id: string | number,
+    data: any,
+  ): Promise<any> {
     const items = this.data[collection];
-    const index = items.findIndex(item => String(item.id) === String(id));
-    
+    const index = items.findIndex((item) => String(item.id) === String(id));
+
     if (index === -1) {
       throw new Error(`Item with id ${id} not found in ${collection}`);
     }
-    
+
     const updatedItem = {
       ...items[index],
       ...data,
-      updatedAt: new Date().toISOString()
+      updatedAt: new Date().toISOString(),
     };
-    
+
     this.data[collection][index] = updatedItem;
     this.saveDatabase();
-    
+
     return updatedItem;
   }
 
-  async delete(collection: keyof DatabaseData, id: string | number): Promise<void> {
+  async delete(
+    collection: keyof DatabaseData,
+    id: string | number,
+  ): Promise<void> {
     const items = this.data[collection];
-    const index = items.findIndex(item => String(item.id) === String(id));
-    
+    const index = items.findIndex((item) => String(item.id) === String(id));
+
     if (index === -1) {
       throw new Error(`Item with id ${id} not found in ${collection}`);
     }
-    
+
     this.data[collection].splice(index, 1);
     this.saveDatabase();
   }
 
   // Query operations
-  async findByQuery(collection: keyof DatabaseData, query: any): Promise<any[]> {
+  async findByQuery(
+    collection: keyof DatabaseData,
+    query: any,
+  ): Promise<any[]> {
     return this.filterItems(this.data[collection], query);
   }
 
@@ -162,22 +179,24 @@ export class JsonServerService {
     if (!query || Object.keys(query).length === 0) {
       return items;
     }
-    
-    return items.filter(item => {
-      return Object.keys(query).every(key => {
+
+    return items.filter((item) => {
+      return Object.keys(query).every((key) => {
         const queryValue = query[key];
         const itemValue = item[key];
-        
+
         // Handle null/undefined values
         if (queryValue === null || queryValue === undefined) {
           return itemValue === queryValue;
         }
-        
+
         // Handle string matching (case-insensitive partial match)
         if (typeof queryValue === 'string') {
-          return String(itemValue).toLowerCase().includes(queryValue.toLowerCase());
+          return String(itemValue)
+            .toLowerCase()
+            .includes(queryValue.toLowerCase());
         }
-        
+
         // Handle exact matching for other types
         return String(itemValue) === String(queryValue);
       });
@@ -198,19 +217,29 @@ export class JsonServerService {
       daily_expenses: ['money_spent', 'userId'],
       invitationCode: ['invitationCode', 'memberId'],
       feedbacks: ['userId', 'stars', 'feedbackText'],
-      user_clubs: ['userId','clubId','memberId','totalAllowance','billingCycle']
+      user_clubs: [
+        'userId',
+        'clubId',
+        'memberId',
+        'totalAllowance',
+        'billingCycle',
+      ],
     };
 
     const fields = requiredFields[collection] || [];
-    const missingFields = fields.filter(field => !data[field]);
-    
+    const missingFields = fields.filter((field) => !data[field]);
+
     if (missingFields.length > 0) {
-      throw new Error(`Missing required fields for ${collection}: ${missingFields.join(', ')}`);
+      throw new Error(
+        `Missing required fields for ${collection}: ${missingFields.join(', ')}`,
+      );
     }
 
     // Additional validation for specific collections
     if (collection === 'users' && data.email) {
-      const existingUser = this.data.users.find(user => user.email === data.email);
+      const existingUser = this.data.users.find(
+        (user) => user.email === data.email,
+      );
       if (existingUser) {
         throw new Error('User with this email already exists');
       }
@@ -236,8 +265,8 @@ export class JsonServerService {
       daily_expenses: this.data.daily_expenses.length,
       invitationCode: this.data.invitationCode.length,
       feedbacks: this.data.feedbacks.length,
-      user_clubs:this.data.user_clubs.length,
-      lastUpdated: new Date().toISOString()
+      user_clubs: this.data.user_clubs.length,
+      lastUpdated: new Date().toISOString(),
     };
     return stats;
   }
@@ -247,7 +276,7 @@ export class JsonServerService {
     const backupData = {
       ...this.data,
       backupCreatedAt: new Date().toISOString(),
-      version: '1.0.0'
+      version: '1.0.0',
     };
     const backupPath = path.join(process.cwd(), `db-backup-${Date.now()}.json`);
     fs.writeFileSync(backupPath, JSON.stringify(backupData, null, 2));
@@ -263,11 +292,11 @@ export class JsonServerService {
       }
       const backupContent = fs.readFileSync(backupPath, 'utf8');
       const backupData = JSON.parse(backupContent);
-      
+
       // Remove backup metadata
       delete backupData.backupCreatedAt;
       delete backupData.version;
-      
+
       this.data = backupData;
       this.saveDatabase();
       this.logger.log(`Database restored from: ${backupPath}`);
@@ -344,7 +373,7 @@ export class JsonServerService {
     return this.findAll('transactions', query);
   }
 
-  async getTransaction(id: string | number ): Promise<any> {
+  async getTransaction(id: string | number): Promise<any> {
     return this.findOne('transactions', id);
   }
 
@@ -439,7 +468,7 @@ export class JsonServerService {
 
   // Helper method to get clubs for a specific member or sub-member
   async getClubsForUser(userId: string | number): Promise<any[]> {
-    return this.findAll('user_clubs', { memberId: userId, userId:userId});
+    return this.findAll('user_clubs', { memberId: userId, userId: userId });
   }
   async getClubsFormember(userId: string | number): Promise<any[]> {
     return this.findAll('user_clubs', { userId: userId });
@@ -448,7 +477,6 @@ export class JsonServerService {
   async getClubsForParentMember(memberId: string | number): Promise<any[]> {
     return this.findAll('user_clubs', { memberId: memberId });
   }
-
 
   async deleteUserClub(id: string | number): Promise<void> {
     return this.delete('user_clubs', id);
