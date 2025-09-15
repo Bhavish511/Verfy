@@ -49,13 +49,20 @@ export class TransactionsController {
   getTransactionFeed(
     @Req() req,
     @Query('status') status?: string,
-    @Query('category', new ParseArrayPipe({ items: String, optional: true }))
-    category?: string[],
+    @Query('category') categoryRaw?: string | string[],
     @Query('subMemberId') subMemberId?: string,
     @Query('dateRange') dateRange?: string,
     @Query('fromDate') fromDate?: string,
     @Query('toDate') toDate?: string,
   ) {
+    // ✅ Normalize category
+  const category =
+    Array.isArray(categoryRaw)
+      ? categoryRaw
+      : categoryRaw
+        ? categoryRaw.split(',').map((c) => c.trim()).filter(Boolean)
+        : [];
+
     const filters = {
       status,
       category,

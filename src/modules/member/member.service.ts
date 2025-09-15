@@ -156,7 +156,6 @@ export class MemberService {
             remainingAllowance: remainingAllowanceAll,
             pendingApprovals,
           },
-          subMemberBreakdown,
           clubs: clubs.map((club: any) => ({
             id: club.id,
             name: club.name,

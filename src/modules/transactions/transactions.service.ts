@@ -204,7 +204,7 @@ export class TransactionsService {
           parentId: userId,
           roles: 'submember',
         }),
-        this.jsonServerService.getTransactions({ clubId }),
+        this.jsonServerService.getTransactions({ memberId: userId, clubId }),
       ]);
 
       const allowedUserIds = new Set([
@@ -236,12 +236,12 @@ export class TransactionsService {
     }
   }
 
-  async getTransactionsByCategory(category: string) {
-    const transactions = await this.jsonServerService.getTransactions({
-      category,
-    });
-    return transactions;
-  }
+  // async getTransactionsByCategory(category: string) {
+  //   const transactions = await this.jsonServerService.getTransactions({
+  //     category,
+  //   });
+  //   return transactions;
+  // }
   async getTransactionFeed(req: any) {
     try {
       const user = req.user;
@@ -253,26 +253,27 @@ export class TransactionsService {
 
       if (role === 'member') {
         // 1) Get all users + club transactions
-        const [allUsers, clubTx] = await Promise.all([
+        const [allUsers, allUserClubs, clubTx] = await Promise.all([
           this.jsonServerService.getUsers(),
-          this.jsonServerService.getTransactions({ clubId }),
+          this.jsonServerService.getUserClubs(),
+          this.jsonServerService.getTransactions({ clubId }), // memberId not needed now
         ]);
 
-        // 2) Find sub-members under this member (via parentId, not userId anymore)
-        const subMembers = allUsers.filter(
-          (u: any) =>
-            String(u.parentId) === memberId && u.roles === 'submember',
-        );
-        const subMemberIds = new Set(subMembers.map((s: any) => String(s.id)));
-
-        // 3) Keep member’s + sub-members’ transactions
-        transactions = (clubTx as Tx[]).filter(
-          (tx) =>
-            String(tx.userId) === memberId ||
-            (tx.userId && subMemberIds.has(String(tx.userId))),
+        const allowedUserIds = new Set(
+          allUserClubs
+            .filter(
+              (uc: any) =>
+                String(uc.memberId) === memberId &&
+                String(uc.clubId) === clubId,
+            )
+            .map((uc: any) => String(uc.userId)),
         );
 
-        // 4) Enrich with userName
+        const transactions = (clubTx as Tx[]).filter(
+          (tx) => tx.userId && allowedUserIds.has(String(tx.userId)),
+        );
+
+        // 4) Enrich with user fullname
         const userById = new Map(allUsers.map((u: any) => [String(u.id), u]));
         const enriched = transactions.map((tx: any) => ({
           ...tx,
@@ -283,20 +284,22 @@ export class TransactionsService {
       } else {
         // role = submember
         const subMemberId = String(user.id);
-        const [allUsers, clubTx] = await Promise.all([
-          this.jsonServerService.getUsers(),
-          this.jsonServerService.getTransactions({ clubId }),
-        ]);
+        const subMemberUser = await this.jsonServerService.getUser(subMemberId);
 
-        transactions = (clubTx as Tx[]).filter(
+        const userClubs = await this.jsonServerService.getUserClubs({
+          userId: user.id,
+          clubId,
+          memberId: memberId,
+        });
+        const clubTx = await this.jsonServerService.getTransactions({ clubId });
+        const transactions = (clubTx as Tx[]).filter(
           (tx) => String(tx.userId) === subMemberId,
         );
 
         // Enrich with userName
-        const userById = new Map(allUsers.map((u: any) => [String(u.id), u]));
         const enriched = transactions.map((tx: any) => ({
           ...tx,
-          userName: userById.get(String(tx.userId))?.fullname || 'Unknown',
+          userName: subMemberUser?.fullname || 'Unknown',
         }));
 
         return this.formatSubMemberTransactionFeed(enriched);
@@ -408,7 +411,7 @@ export class TransactionsService {
         transactions = await this.jsonServerService.getTransactions({
           userId,
           clubId: user.currently_at,
-        });        
+        });
       }
       // Apply filters
       if (filters.status) {
