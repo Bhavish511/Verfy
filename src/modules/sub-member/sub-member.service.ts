@@ -432,7 +432,8 @@ export class SubMemberService {
 
       // 3. Get the user_club record (single, since sub-member belongs to currentClubId)
       const [userClub] = userClubs || [];
-
+      console.log(userClub);
+      
       const totalSpent = Number(userClub?.totalSpent ?? 0);
       const totalAllowance = Number(userClub?.totalAllowance ?? 0);
       const remainingAllowance = totalAllowance - totalSpent;

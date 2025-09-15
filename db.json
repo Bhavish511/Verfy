@@ -693,10 +693,11 @@
       "invitationCode": "verfy-zdif",
       "subMemberId": "2352i24lf",
       "memberId": "101",
-      "status": "active",
+      "status": "used",
       "expiresAt": "2025-09-22T09:41:46.441Z",
       "createdAt": "2025-09-15T09:41:46.441Z",
-      "updatedAt": "2025-09-15T09:41:46.441Z"
+      "updatedAt": "2025-09-15T11:05:44.135Z",
+      "usedAt": "2025-09-15T11:05:44.135Z"
     }
   ],
   "feedbacks": [
