@@ -8,12 +8,12 @@
       "profilePic": null,
       "under12": false,
       "relation": null,
-      "currently_at": "1",
+      "currently_at": "2",
       "roles": "member",
       "phone": "+1-555-1001",
       "address": "101 Main St, City, Country",
       "createdAt": "2025-01-01T10:00:00.000Z",
-      "updatedAt": "2025-01-01T10:00:00.000Z"
+      "updatedAt": "2025-09-15T09:44:38.792Z"
     },
     {
       "id": "102",
@@ -181,6 +181,21 @@
       "address": "456 Oak Ave, Los Angeles, CA 90210",
       "createdAt": "2024-01-16T14:20:00.000Z",
       "updatedAt": "2025-09-05T13:29:50.361Z"
+    },
+    {
+      "id": "2352i24lf",
+      "fullname": "abc",
+      "email": "aaa1111111@gmail.com",
+      "password": "abc",
+      "under12": true,
+      "relation": "guest",
+      "allowance": 1500,
+      "BillingCycle": "monthly",
+      "roles": "submember",
+      "parentId": "101",
+      "currently_at": "1",
+      "createdAt": "2025-09-15T09:41:46.436Z",
+      "updatedAt": "2025-09-15T09:41:46.436Z"
     }
   ],
   "clubs": [
@@ -371,6 +386,66 @@
       "date": "2025-09-10T15:45:00.000Z",
       "receiptUrl": null,
       "createdAt": "2025-09-10T15:45:00.000Z"
+    },
+    {
+      "id": "hrb0kw1z8",
+      "clubId": "1",
+      "userId": "2352i24lf",
+      "memberId": "101",
+      "bill": 450,
+      "category": "Travel",
+      "description": "Travel",
+      "status": "pending",
+      "verifyCharge": false,
+      "flagChargeId": false,
+      "date": "2025-09-15T09:41:46.446Z",
+      "createdAt": "2025-09-15T09:41:46.447Z",
+      "updatedAt": "2025-09-15T09:41:46.447Z"
+    },
+    {
+      "id": "e5idcdcpd",
+      "clubId": "1",
+      "userId": "2352i24lf",
+      "memberId": "101",
+      "bill": 300,
+      "category": "Transportation",
+      "description": "Transportation",
+      "status": "pending",
+      "verifyCharge": false,
+      "flagChargeId": false,
+      "date": "2025-09-15T09:41:46.447Z",
+      "createdAt": "2025-09-15T09:41:46.447Z",
+      "updatedAt": "2025-09-15T09:41:46.447Z"
+    },
+    {
+      "id": "2xoh33qeh",
+      "clubId": "2",
+      "userId": "2352i24lf",
+      "memberId": "101",
+      "bill": 450,
+      "category": "Travel",
+      "description": "Travel",
+      "status": "pending",
+      "verifyCharge": false,
+      "flagChargeId": false,
+      "date": "2025-09-15T09:41:46.450Z",
+      "createdAt": "2025-09-15T09:41:46.450Z",
+      "updatedAt": "2025-09-15T09:41:46.450Z"
+    },
+    {
+      "id": "6fr6u3vip",
+      "clubId": "2",
+      "userId": "2352i24lf",
+      "memberId": "101",
+      "bill": 300,
+      "category": "Transportation",
+      "description": "Transportation",
+      "status": "pending",
+      "verifyCharge": false,
+      "flagChargeId": false,
+      "date": "2025-09-15T09:41:46.450Z",
+      "createdAt": "2025-09-15T09:41:46.450Z",
+      "updatedAt": "2025-09-15T09:41:46.450Z"
     }
   ],
   "flagCharges": [],
@@ -612,6 +687,16 @@
       "createdAt": "2025-09-13T14:56:50.246Z",
       "updatedAt": "2025-09-15T09:08:25.498Z",
       "usedAt": "2025-09-15T09:08:25.497Z"
+    },
+    {
+      "id": "9rm38ap79",
+      "invitationCode": "verfy-zdif",
+      "subMemberId": "2352i24lf",
+      "memberId": "101",
+      "status": "active",
+      "expiresAt": "2025-09-22T09:41:46.441Z",
+      "createdAt": "2025-09-15T09:41:46.441Z",
+      "updatedAt": "2025-09-15T09:41:46.441Z"
     }
   ],
   "feedbacks": [
@@ -867,6 +952,28 @@
       "memberId": "1",
       "totalAllowance": 1500,
       "totalSpent": 0
+    },
+    {
+      "id": "xaxad7hof",
+      "userId": "2352i24lf",
+      "clubId": "1",
+      "billingCycle": "monthly",
+      "memberId": "101",
+      "totalAllowance": 1500,
+      "totalSpent": 750,
+      "createdAt": "2025-09-15T09:41:46.438Z",
+      "updatedAt": "2025-09-15T09:41:46.449Z"
+    },
+    {
+      "id": "4xmfzkjnr",
+      "userId": "2352i24lf",
+      "clubId": "2",
+      "billingCycle": "monthly",
+      "memberId": "101",
+      "totalAllowance": 1500,
+      "totalSpent": 750,
+      "createdAt": "2025-09-15T09:41:46.440Z",
+      "updatedAt": "2025-09-15T09:41:46.451Z"
     }
   ]
 }

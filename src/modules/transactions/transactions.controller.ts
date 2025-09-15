@@ -56,13 +56,23 @@ export class TransactionsController {
     @Query('toDate') toDate?: string,
   ) {
     // ✅ Normalize category
-  const category =
-    Array.isArray(categoryRaw)
-      ? categoryRaw
-      : categoryRaw
-        ? categoryRaw.split(',').map((c) => c.trim()).filter(Boolean)
-        : [];
+    let category: string[] = [];
 
+    if (Array.isArray(categoryRaw)) {
+      category = categoryRaw.map((c) => c.trim());
+    } else if (typeof categoryRaw === 'string' && categoryRaw.length > 0) {
+      try {
+        // Try parse as JSON first (["Travel","Transportation"])
+        const parsed = JSON.parse(categoryRaw);
+        if (Array.isArray(parsed)) {
+          category = parsed.map((c) => String(c).trim());
+        } else {
+          category = categoryRaw.split(',').map((c) => c.trim());
+        }
+      } catch {
+        category = categoryRaw.split(',').map((c) => c.trim());
+      }
+    }
     const filters = {
       status,
       category,
