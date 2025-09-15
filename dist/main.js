@@ -33,27 +33,43 @@ var __importStar = (this && this.__importStar) || (function () {
     };
 })();
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.default = handler;
 const core_1 = require("@nestjs/core");
 const app_module_1 = require("./app.module");
 const dotenv = __importStar(require("dotenv"));
 const fs = __importStar(require("fs"));
 const uploadFileHandler_1 = require("./utils/uploadFileHandler");
 dotenv.config();
-async function bootstrap() {
+let cachedServer;
+async function createApp() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule);
     app.enableCors({ origin: '*', credentials: true });
     if (fs.existsSync(uploadFileHandler_1.uploadPath)) {
         app.useStaticAssets(uploadFileHandler_1.uploadPath, { prefix: '/uploads/' });
     }
-    else {
-        console.log(`Uploads folder not found, skipping static assets setup.`);
-    }
-    const PORT = process.env.PORT || 3000;
-    await app.listen(PORT);
-    console.log(`🚀 NestJS server running on port ${PORT}`);
+    await app.init();
+    return app.getHttpAdapter().getInstance();
 }
-bootstrap().catch(err => {
-    console.error('Error starting server:', err);
-    process.exit(1);
-});
+if (!process.env.VERCEL) {
+    (async () => {
+        const app = await core_1.NestFactory.create(app_module_1.AppModule);
+        app.enableCors({ origin: '*', credentials: true });
+        if (fs.existsSync(uploadFileHandler_1.uploadPath)) {
+            app.useStaticAssets(uploadFileHandler_1.uploadPath, { prefix: '/uploads/' });
+        }
+        const PORT = process.env.PORT || 3000;
+        await app.listen(PORT);
+        console.log(`🚀 NestJS server running on port ${PORT}`);
+    })().catch((err) => {
+        console.error('Error starting server:', err);
+        process.exit(1);
+    });
+}
+async function handler(req, res) {
+    if (!cachedServer) {
+        cachedServer = await createApp();
+        console.log('⚡️ NestJS bootstrapped (serverless)');
+    }
+    return cachedServer(req, res);
+}
 //# sourceMappingURL=main.js.map
