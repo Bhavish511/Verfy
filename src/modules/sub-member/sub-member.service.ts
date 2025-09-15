@@ -401,7 +401,7 @@ export class SubMemberService {
     } catch (error: any) {
       return {
         success: false,
-        message: error.message ?? 'Internal Server Error',
+        message: error.message ?? 'Edit allowance failed',
         data: null,
       };
     }
