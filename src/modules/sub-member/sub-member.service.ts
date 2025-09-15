@@ -7,7 +7,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { CreateSubMemberDto } from './dto/create-sub-member.dto';
-import { generateInvitationCode } from 'src/utils/createGenerationCode';
+import { generateInvitationCode } from '../../utils/createGenerationCode';
 import { JsonServerService } from '../../services/json-server.service';
 import { TransactionsService } from '../transactions/transactions.service';
 
@@ -474,6 +474,7 @@ export class SubMemberService {
             id: user.id,
             fullname: user.fullname,
             email: user.email,
+            profilePic:user.profilePic,
             relation: user.relation,
             allowance: totalAllowance,
           },
