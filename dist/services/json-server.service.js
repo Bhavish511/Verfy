@@ -51,8 +51,8 @@ let JsonServerService = JsonServerService_1 = class JsonServerService {
     logger = new common_1.Logger(JsonServerService_1.name);
     sourcePath = path.join(__dirname, '../db.json');
     dbPath = process.env.VERCEL
-        ? path.join('/tmp', 'db.json')
-        : path.join(process.cwd(), 'src', 'db.json');
+        ? path.join(process.cwd(), 'db.json')
+        : path.join(process.cwd(), 'db.json');
     data;
     constructor() {
         this.loadDatabase();

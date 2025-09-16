@@ -8,7 +8,7 @@
       "profilePic": null,
       "under12": false,
       "relation": null,
-      "currently_at": "2",
+      "currently_at": "1",
       "roles": "member",
       "phone": "+1-555-1001",
       "address": "101 Main St, City, Country",
@@ -960,10 +960,10 @@
       "clubId": "1",
       "billingCycle": "monthly",
       "memberId": "101",
-      "totalAllowance": 1500,
+      "totalAllowance": 6000,
       "totalSpent": 750,
       "createdAt": "2025-09-15T09:41:46.438Z",
-      "updatedAt": "2025-09-15T09:41:46.449Z"
+      "updatedAt": "2025-09-16T14:04:38.845Z"
     },
     {
       "id": "4xmfzkjnr",

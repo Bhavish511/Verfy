@@ -187,25 +187,25 @@ let SubMemberService = SubMemberService_1 = class SubMemberService {
         if (user.roles !== 'member') {
             throw new common_1.BadRequestException('You are not eligible to get Sub members!');
         }
+        console.log(user);
         const memberId = String(user.id);
         const clubId = String(user.currently_at);
-        const submembers = await this.jsonServerService.getUsers({
-            parentId: memberId,
-            roles: 'submember',
-        });
-        const transactions = await this.jsonServerService.getTransactions({
+        const userClubs = await this.jsonServerService.getUserClubs({
+            memberId: memberId,
             clubId,
         });
-        const spentByUser = new Map();
-        for (const tx of transactions || []) {
-            const uid = String(tx.userId);
-            const bill = Number(tx.bill) || 0;
-            spentByUser.set(uid, (spentByUser.get(uid) || 0) + bill);
-        }
-        const enriched = submembers.map((s) => ({
-            ...s,
-            totalSpent: spentByUser.get(String(s.id)) || 0,
-        }));
+        console.log(userClubs);
+        const subMemberIds = userClubs.map((uc) => String(uc.userId));
+        const allUsers = await this.jsonServerService.getUsers();
+        const submembers = allUsers.filter((u) => subMemberIds.includes(String(u.id)) && u.roles === 'submember');
+        const enriched = submembers.map((user) => {
+            const uc = userClubs.find((x) => String(x.userId) === String(user.id));
+            return {
+                ...user,
+                totalSpent: Number(uc?.totalSpent ?? 0),
+                totalAllowance: Number(uc?.totalAllowance ?? 0),
+            };
+        });
         return {
             success: true,
             data: {
@@ -296,6 +296,9 @@ let SubMemberService = SubMemberService_1 = class SubMemberService {
                 };
             }
             const updatedUserClub = await this.jsonServerService.updateUserClub(userClub.id, { totalAllowance: allowance });
+            console.log(updatedUserClub);
+            const data = await this.jsonServerService.getUserClub(userClub.id);
+            console.log(data);
             return {
                 success: true,
                 message: 'New Allowance Set!',
@@ -387,7 +390,9 @@ let SubMemberService = SubMemberService_1 = class SubMemberService {
             const userObj = await this.jsonServerService.getUser(user.id);
             const userId = String(userObj.id);
             const currentClubId = String(userObj.currently_at);
-            const userClubRecords = await this.jsonServerService.getUserClubs({ userId });
+            const userClubRecords = await this.jsonServerService.getUserClubs({
+                userId,
+            });
             const currentUserClub = userClubRecords.find((uc) => String(uc.clubId) === currentClubId);
             if (!currentUserClub)
                 throw new Error('User is not part of this club');
