@@ -273,7 +273,7 @@ export class SubMemberService {
       return {
         ...user,
         totalSpent: Number(uc?.totalSpent ?? 0),
-        totalAllowance: Number(uc?.totalAllowance ?? 0),
+        allowance: Number(uc?.totalAllowance ?? 0),
       };
     });
 
