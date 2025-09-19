@@ -569,9 +569,7 @@ export class SubMemberService {
 
       const transactionsWithDetails = recent.map((tx: any) => ({
         ...tx,
-        clubName: clubDetails?.name || 'Unknown Club',
-        canVerify: userObj.roles === 'member', // only members can verify
-        canFlag: true, // both can flag
+        userName: userObj.fullname || 'Unknown',
       }));
 
       return {

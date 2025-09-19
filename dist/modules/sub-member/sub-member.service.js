@@ -426,9 +426,7 @@ let SubMemberService = SubMemberService_1 = class SubMemberService {
             }));
             const transactionsWithDetails = recent.map((tx) => ({
                 ...tx,
-                clubName: clubDetails?.name || 'Unknown Club',
-                canVerify: userObj.roles === 'member',
-                canFlag: true,
+                userName: userObj.fullname || 'Unknown',
             }));
             return {
                 success: true,
