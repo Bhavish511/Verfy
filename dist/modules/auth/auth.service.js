@@ -147,16 +147,8 @@ let AuthService = class AuthService {
             });
             if (invitationCodes.length > 0) {
                 const match = invitationCodes[0];
-                const now = new Date();
-                const expiresAt = new Date(match.expiresAt);
                 console.log(match);
-                if (now > expiresAt) {
-                    await this.jsonServerService.updateInvitationCode(match.id, {
-                        status: 'expired',
-                        updatedAt: now.toISOString(),
-                    });
-                }
-                else if (match.status === 'used') {
+                if (match.status === 'used') {
                     const accessToken = jwt.sign({ id: user.id }, process.env.ACCESS_TOKEN_SECRET, { expiresIn: '1d' });
                     const { password: _, ...userWithoutPassword } = user;
                     return {
@@ -192,11 +184,16 @@ let AuthService = class AuthService {
             if (!userId || !invitationCode) {
                 throw new common_1.BadRequestException('User ID and invitation code are required!');
             }
-            const users = await this.jsonServerService.getUsers({ id: userId });
+            const users = await this.jsonServerService.getUsers({
+                id: userId,
+            });
             if (!users.length)
                 throw new common_1.BadRequestException('User not found');
             const user = users[0];
-            const userClubs = await this.jsonServerService.getUserClubs({ userId, clubId: user.currently_at });
+            const userClubs = await this.jsonServerService.getUserClubs({
+                userId,
+                clubId: user.currently_at,
+            });
             const currentUserClub = userClubs[0];
             if (!currentUserClub)
                 throw new common_1.BadRequestException('User is not part of any club');

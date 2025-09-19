@@ -191,7 +191,7 @@ export class SubMemberService {
           }),
         ]);
 
-        // 🔥 Update user_clubs totalSpent for this club
+        // Update user_clubs totalSpent for this club
         const [userClub] = await this.jsonServerService.getUserClubs({
           userId: subMember.id,
           clubId,
@@ -244,18 +244,18 @@ export class SubMemberService {
       throw new BadRequestException('You are not eligible to get Sub members!');
     }
     console.log(user);
-    
+
     const memberId = String(user.id);
     const clubId = String(user.currently_at);
 
     // 1) Get all user_clubs under this member in this club
     const userClubs = await this.jsonServerService.getUserClubs({
-      memberId:memberId,
+      memberId: memberId,
       clubId,
     });
 
     console.log(userClubs);
-    
+
     // 2) Get user objects for these submembers
     const subMemberIds = userClubs.map((uc: any) => String(uc.userId));
 
@@ -348,8 +348,13 @@ export class SubMemberService {
     }
   }
 
-  async editAllowance(userId: string, allowance: number) {
+  async editAllowance(req, userId: string, allowance: number) {
     try {
+      const user = req.user;
+      console.log(user);
+      const parentData = await this.jsonServerService.getUser(user.id);
+      console.log(parentData);
+
       // 1. Fetch sub-member
       const subMember = await this.jsonServerService.getUser(userId);
       if (!subMember) {
@@ -372,7 +377,7 @@ export class SubMemberService {
       // 3. Get sub-member’s club record
       const [userClub] = await this.jsonServerService.getUserClubs({
         userId: String(userId),
-        clubId: String(subMember.currently_at),
+        clubId: String(parentData.currently_at),
       });
 
       if (!userClub) {
@@ -398,10 +403,10 @@ export class SubMemberService {
         { totalAllowance: allowance },
       );
       console.log(updatedUserClub);
-      
+
       const data = await this.jsonServerService.getUserClub(userClub.id);
       console.log(data);
-      
+
       return {
         success: true,
         message: 'New Allowance Set!',
@@ -513,6 +518,7 @@ export class SubMemberService {
       const userClubRecords = await this.jsonServerService.getUserClubs({
         userId,
       });
+      console.log(userClubRecords);
 
       // Pick the current club record
       const currentUserClub = userClubRecords.find(
@@ -523,15 +529,15 @@ export class SubMemberService {
 
       const memberId = String(currentUserClub.memberId);
 
-      // 3) Role-based clubs loading
-      const clubsPromise =
-        userObj.roles === 'member'
-          ? this.jsonServerService.getClubsForUser(memberId) // all users under this member
-          : this.jsonServerService.getUserClubs({ userId }); // only this submember
-
+      const clubs = (
+        await Promise.all(
+          userClubRecords.map((uc) =>
+            this.jsonServerService.getClubs({ id: uc.clubId }),
+          ),
+        )
+      ).flat();
       // 4) Fetch everything in parallel
-      const [clubs, transactions, clubDetails] = await Promise.all([
-        clubsPromise,
+      const [transactions, clubDetails] = await Promise.all([
         this.jsonServerService.getTransactions({
           userId,
           clubId: currentClubId,
@@ -573,7 +579,12 @@ export class SubMemberService {
         message: 'Dashboard data retrieved successfully',
         data: {
           summary: { totalSpent, totalAllowance, remainingAllowance },
-          clubs,
+          clubs: clubs.map((club: any) => ({
+            id: club.id,
+            name: club.name,
+            location: club.location,
+            isActive: String(club.id) === currentClubId,
+          })),
           twoRecentTransactions,
           transactions: transactionsWithDetails,
           user: {

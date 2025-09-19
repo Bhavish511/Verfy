@@ -79,7 +79,12 @@ export declare class SubMemberController {
                 totalAllowance: number;
                 remainingAllowance: number;
             };
-            clubs: any[];
+            clubs: {
+                id: any;
+                name: any;
+                location: any;
+                isActive: boolean;
+            }[];
             twoRecentTransactions: {
                 transactionId: any;
                 amount: number;

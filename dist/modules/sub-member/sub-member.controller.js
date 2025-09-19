@@ -31,7 +31,7 @@ let SubMemberController = class SubMemberController {
         return this.subMemberService.removeSubMember(id);
     }
     editAllowance(id, body, req) {
-        return this.subMemberService.editAllowance(id, body.allowance);
+        return this.subMemberService.editAllowance(req, id, body.allowance);
     }
     getsubDashboard(id) {
         return this.subMemberService.getsubDashboard(id);

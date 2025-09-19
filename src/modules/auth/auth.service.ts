@@ -147,16 +147,9 @@ export class AuthService {
 
       if (invitationCodes.length > 0) {
         const match = invitationCodes[0] as InvitationCode;
-        const now = new Date();
-        const expiresAt = new Date(match.expiresAt);
         console.log(match);
 
-        if (now > expiresAt) {
-          await this.jsonServerService.updateInvitationCode(match.id, {
-            status: 'expired',
-            updatedAt: now.toISOString(),
-          });
-        } else if (match.status === 'used') {
+        if (match.status === 'used') {
           // ✅ Already used and valid → full login here
           const accessToken = jwt.sign(
             { id: user.id },
@@ -197,86 +190,94 @@ export class AuthService {
   }
 
   // Complete sub-member login with invitation code (Step 2) - NO ROLE CHECK HERE
-  async completeSubMemberLogin(userId: string | number, invitationCode: string) {
-  try {
-    if (!userId || !invitationCode) {
-      throw new BadRequestException(
-        'User ID and invitation code are required!',
-      );
-    }
+  async completeSubMemberLogin(
+    userId: string | number,
+    invitationCode: string,
+  ) {
+    try {
+      if (!userId || !invitationCode) {
+        throw new BadRequestException(
+          'User ID and invitation code are required!',
+        );
+      }
 
-    // 1) Get the user array by id
-    const users: any[] = await this.jsonServerService.getUsers({ id: userId });
-    if (!users.length) throw new BadRequestException('User not found');
-    const user = users[0] as User;
-
-    // 2) Get this user's user_club record to find memberId
-    const userClubs = await this.jsonServerService.getUserClubs({ userId,clubId:user.currently_at });
-    const currentUserClub = userClubs[0];
-    if (!currentUserClub)
-      throw new BadRequestException('User is not part of any club');
-
-    const memberId: string = String(currentUserClub.memberId);
-
-    // 3) Fetch the member user object
-    const member = await this.jsonServerService.getUser(memberId);
-
-    // 4) Validate invitation code
-    const invitationCodes = await this.jsonServerService.getInvitationCodes({
-      invitationCode,
-    });
-    const match = invitationCodes[0] as InvitationCode;
-    if (!match) throw new BadRequestException('Invalid invitation code!');
-
-    if (String(match.subMemberId) !== String(userId)) {
-      throw new BadRequestException(
-        'Invitation code does not match this sub-member!',
-      );
-    }
-
-    const now = new Date();
-    const expiresAt = new Date(match.expiresAt);
-    if (now > expiresAt) {
-      await this.jsonServerService.updateInvitationCode(match.id, {
-        status: 'expired',
+      // 1) Get the user array by id
+      const users: any[] = await this.jsonServerService.getUsers({
+        id: userId,
       });
-      throw new BadRequestException('Invitation code has expired!');
+      if (!users.length) throw new BadRequestException('User not found');
+      const user = users[0] as User;
+
+      // 2) Get this user's user_club record to find memberId
+      const userClubs = await this.jsonServerService.getUserClubs({
+        userId,
+        clubId: user.currently_at,
+      });
+      const currentUserClub = userClubs[0];
+      if (!currentUserClub)
+        throw new BadRequestException('User is not part of any club');
+
+      const memberId: string = String(currentUserClub.memberId);
+
+      // 3) Fetch the member user object
+      const member = await this.jsonServerService.getUser(memberId);
+
+      // 4) Validate invitation code
+      const invitationCodes = await this.jsonServerService.getInvitationCodes({
+        invitationCode,
+      });
+      const match = invitationCodes[0] as InvitationCode;
+      if (!match) throw new BadRequestException('Invalid invitation code!');
+
+      if (String(match.subMemberId) !== String(userId)) {
+        throw new BadRequestException(
+          'Invitation code does not match this sub-member!',
+        );
+      }
+
+      const now = new Date();
+      const expiresAt = new Date(match.expiresAt);
+      if (now > expiresAt) {
+        await this.jsonServerService.updateInvitationCode(match.id, {
+          status: 'expired',
+        });
+        throw new BadRequestException('Invitation code has expired!');
+      }
+
+      // 5) Mark invitation code as used
+      await this.jsonServerService.updateInvitationCode(match.id, {
+        status: 'used',
+        usedAt: now.toISOString(),
+      });
+
+      // 6) Create access token
+      const accessToken = jwt.sign(
+        { id: user.id },
+        process.env.ACCESS_TOKEN_SECRET!,
+        { expiresIn: '1d' },
+      );
+
+      // 7) Remove password and attach memberName
+      const { password: _, ...userWithoutPassword } = user;
+      const responseUser = {
+        ...userWithoutPassword,
+        memberName: member?.fullname || 'Unknown',
+      };
+
+      return {
+        success: true,
+        message: 'Sub-member login successful!',
+        skipInvitation: true,
+        data: {
+          user: responseUser,
+          accessToken,
+        },
+      };
+    } catch (error) {
+      if (error instanceof BadRequestException) throw error;
+      throw new InternalServerErrorException('Login completion failed');
     }
-
-    // 5) Mark invitation code as used
-    await this.jsonServerService.updateInvitationCode(match.id, {
-      status: 'used',
-      usedAt: now.toISOString(),
-    });
-
-    // 6) Create access token
-    const accessToken = jwt.sign(
-      { id: user.id },
-      process.env.ACCESS_TOKEN_SECRET!,
-      { expiresIn: '1d' },
-    );
-
-    // 7) Remove password and attach memberName
-    const { password: _, ...userWithoutPassword } = user;
-    const responseUser = {
-      ...userWithoutPassword,
-      memberName: member?.fullname || 'Unknown',
-    };
-
-    return {
-      success: true,
-      message: 'Sub-member login successful!',
-      skipInvitation: true,
-      data: {
-        user: responseUser,
-        accessToken,
-      },
-    };
-  } catch (error) {
-    if (error instanceof BadRequestException) throw error;
-    throw new InternalServerErrorException('Login completion failed');
   }
-}
 
   async logout(accessToken: string) {
     // just return success, since JWTs are stateless

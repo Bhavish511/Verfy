@@ -30,7 +30,7 @@ export class SubMemberController {
   @UseGuards(AuthGuard)
   @Roles(Role.MEMBER)
   editAllowance(@Param('id') id: string, @Body() body: { allowance: number }, @Req() req) {
-    return this.subMemberService.editAllowance(id, body.allowance);
+    return this.subMemberService.editAllowance(req,id, body.allowance);
   }
   @Get('get-subdashboard/:id')
   @UseGuards(AuthGuard)

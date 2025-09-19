@@ -59,7 +59,7 @@ export declare class SubMemberService {
         message: string;
         subMember: any;
     }>;
-    editAllowance(userId: string, allowance: number): Promise<{
+    editAllowance(req: any, userId: string, allowance: number): Promise<{
         success: boolean;
         message: string;
         data: {
@@ -114,7 +114,12 @@ export declare class SubMemberService {
                 totalAllowance: number;
                 remainingAllowance: number;
             };
-            clubs: any[];
+            clubs: {
+                id: any;
+                name: any;
+                location: any;
+                isActive: boolean;
+            }[];
             twoRecentTransactions: {
                 transactionId: any;
                 amount: number;

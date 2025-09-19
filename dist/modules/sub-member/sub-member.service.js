@@ -260,8 +260,12 @@ let SubMemberService = SubMemberService_1 = class SubMemberService {
             throw new common_1.InternalServerErrorException(error.message);
         }
     }
-    async editAllowance(userId, allowance) {
+    async editAllowance(req, userId, allowance) {
         try {
+            const user = req.user;
+            console.log(user);
+            const parentData = await this.jsonServerService.getUser(user.id);
+            console.log(parentData);
             const subMember = await this.jsonServerService.getUser(userId);
             if (!subMember) {
                 return {
@@ -279,7 +283,7 @@ let SubMemberService = SubMemberService_1 = class SubMemberService {
             }
             const [userClub] = await this.jsonServerService.getUserClubs({
                 userId: String(userId),
-                clubId: String(subMember.currently_at),
+                clubId: String(parentData.currently_at),
             });
             if (!userClub) {
                 return {
@@ -393,15 +397,13 @@ let SubMemberService = SubMemberService_1 = class SubMemberService {
             const userClubRecords = await this.jsonServerService.getUserClubs({
                 userId,
             });
+            console.log(userClubRecords);
             const currentUserClub = userClubRecords.find((uc) => String(uc.clubId) === currentClubId);
             if (!currentUserClub)
                 throw new Error('User is not part of this club');
             const memberId = String(currentUserClub.memberId);
-            const clubsPromise = userObj.roles === 'member'
-                ? this.jsonServerService.getClubsForUser(memberId)
-                : this.jsonServerService.getUserClubs({ userId });
-            const [clubs, transactions, clubDetails] = await Promise.all([
-                clubsPromise,
+            const clubs = (await Promise.all(userClubRecords.map((uc) => this.jsonServerService.getClubs({ id: uc.clubId })))).flat();
+            const [transactions, clubDetails] = await Promise.all([
                 this.jsonServerService.getTransactions({
                     userId,
                     clubId: currentClubId,
@@ -433,7 +435,12 @@ let SubMemberService = SubMemberService_1 = class SubMemberService {
                 message: 'Dashboard data retrieved successfully',
                 data: {
                     summary: { totalSpent, totalAllowance, remainingAllowance },
-                    clubs,
+                    clubs: clubs.map((club) => ({
+                        id: club.id,
+                        name: club.name,
+                        location: club.location,
+                        isActive: String(club.id) === currentClubId,
+                    })),
                     twoRecentTransactions,
                     transactions: transactionsWithDetails,
                     user: {
