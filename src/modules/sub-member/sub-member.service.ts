@@ -428,8 +428,9 @@ export class SubMemberService {
       if (!user) throw new Error('Unauthorized');
 
       const userId = String(user.id);
-      const memberId = user.parentId != null ? String(user.parentId) : null;
-      const currentClubId = String(user.currently_at);
+      const memberId = String(user.parentId);
+      const memberData = await this.jsonServerService.getUser(memberId);
+      const currentClubId = String(memberData.currently_at);
 
       // 2. Fetch all needed data
       const [userClubs, transactions, clubDetails] = await Promise.all([
@@ -471,9 +472,7 @@ export class SubMemberService {
 
       const transactionsWithDetails = recent.map((tx: any) => ({
         ...tx,
-        clubName: clubDetails?.name || 'Unknown Club',
-        canVerify: false, // sub-members cannot verify
-        canFlag: true, // sub-members can flag
+        userName: user.fullname || 'Unknown',
       }));
 
       return {

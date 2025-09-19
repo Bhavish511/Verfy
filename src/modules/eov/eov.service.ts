@@ -93,7 +93,10 @@ export class EovService {
       const allUserClubs = (
         await Promise.all(
           allUserIds.map((uid) =>
-            this.jsonServerService.getUserClubs({ userId: uid, clubId:member.currently_at }),
+            this.jsonServerService.getUserClubs({
+              userId: uid,
+              clubId: member.currently_at,
+            }),
           ),
         )
       ).flat();
@@ -372,13 +375,14 @@ export class EovService {
       [
         this.fetchClub(String(clubId)),
         this.fetchSubMembersForMember(memberId),
-        this.fetchTransactionsForClub(String(clubId)),
+        this.fetchTransactionsForClub(String(clubId), memberId),
         this.fetchFlagChargesForMember(memberId),
       ],
     );
 
     // 3) Fetch user_clubs for member + sub-members (for this club only)
     const allUserClubs = await this.jsonServerService.getUserClubs({
+      memberId,
       clubId: String(clubId),
     });
 
@@ -387,9 +391,9 @@ export class EovService {
       String(memberId),
       ...submembers.map((u) => String(u.id)),
     ]);
-    const scopedUserClubs = allUserClubs.filter((uc) =>
-      allowedIds.has(String(uc.userId)),
-    );
+    // const scopedUserClubs = allUserClubs.filter((uc) =>
+    //   allowedIds.has(String(uc.userId)),
+    // );
 
     // 4) Scope transactions to member + submembers
     const spenderIds = new Set<string>(allowedIds);
@@ -411,7 +415,7 @@ export class EovService {
       member,
       club,
       submembers,
-      scopedUserClubs, // 👈 pass user_clubs here
+      allUserClubs, // 👈 pass user_clubs here
       transactions,
       flagCharges,
       usersById,
@@ -492,6 +496,7 @@ export class EovService {
       const allUserIds = [member.id, ...subMembers.map((sm) => sm.id)];
 
       const userClubs = await this.jsonServerService.getUserClubs({
+        memberId: member.id,
         clubId: String(member.currently_at),
       });
 
@@ -501,7 +506,7 @@ export class EovService {
       );
 
       // Sum totalAllowance from these records
-      const totalAllowance = relevantUserClubs.reduce(
+      const totalAllowance = userClubs.reduce(
         (sum, uc) => sum + (uc.totalAllowance || 0),
         0,
       );
@@ -806,7 +811,6 @@ export class EovService {
           <th>Date</th>
           <th>Transactions</th>
           <th>Total Spent</th>
-          <th>Flagged</th>
         </tr>
         ${breakdown.timeBased
           .map(
@@ -815,7 +819,6 @@ export class EovService {
             <td>${entry.date}</td>
             <td>${entry.transactions}</td>
             <td>$${entry.totalSpent}</td>
-            <td>${entry.flaggedCount}</td>
           </tr>
         `,
           )
@@ -958,14 +961,19 @@ export class EovService {
           String(uc.userId) === String(member.id) &&
           String(uc.clubId) === String(club?.id),
       );
-      if (userClub) {
-        doc.text(`Total Allowance: ${formatCurrency(userClub.totalAllowance)}`);
-        doc.text(`Total Spent:     ${formatCurrency(userClub.totalSpent)}`);
-        doc.text(
-          `Remaining:       ${formatCurrency(
-            (userClub.totalAllowance || 0) - (userClub.totalSpent || 0),
-          )}`,
+      if (userClubs) {
+        const totalAllowance = userClubs.reduce(
+          (sum, uc) => sum + (uc.totalAllowance || 0),
+          0,
         );
+        const totalSpent = userClubs.reduce(
+          (sum, uc) => sum + (uc.totalSpent || 0),
+          0,
+        );
+        const remaining = totalAllowance - totalSpent;
+        doc.text(`Total Allowance: ${formatCurrency(totalAllowance)}`);
+        doc.text(`Total Spent:     ${formatCurrency(totalSpent)}`);
+        doc.text(`Remaining:       ${formatCurrency(remaining || 0)}`);
       } else {
         doc
           .fontSize(10)
@@ -1046,7 +1054,7 @@ export class EovService {
           doc.text(
             `${idx + 1}. ${entry.date}: ${entry.transactions} transactions, ${formatCurrency(
               entry.totalSpent,
-            )} spent, ${entry.flaggedCount} flagged`,
+            )} spent`,
           );
           safeMoveDown(0.2);
         });
@@ -1072,7 +1080,7 @@ export class EovService {
 
           const line =
             `${idx + 1}. ` +
-            `Txn: ${t.id} | Club: ${t.clubId} | Category: ${t.category} | ` +
+            `Txn: ${t.id} | Club: ${club?.name} | Category: ${t.category} | ` +
             `Bill: ${formatCurrency(Number(t.bill) || 0)} | Status: ${t.status} | Verified: ${
               t.verifyCharge ? 'Yes' : 'No'
             } | ` +
@@ -1100,7 +1108,7 @@ export class EovService {
         flagCharges.forEach((f, idx) => {
           doc
             .fontSize(11)
-            .text(`#${idx + 1} (ID: ${f.id})  Owner: ${f.userId}`);
+            .text(`#${idx + 1} (ID: ${f.id})  Owner: ${member.fullname}`);
           doc.fontSize(10).text(`Comment: ${f.comment}`);
           if (Array.isArray(f.reasons) && f.reasons.length) {
             doc.text(`Reasons: ${f.reasons.join(', ')}`);
@@ -1203,10 +1211,12 @@ export class EovService {
 
   private async fetchTransactionsForClub(
     clubId: string,
+    memberId: string,
   ): Promise<Transaction[]> {
     try {
       const transactions = await this.jsonServerService.getTransactions({
         clubId,
+        memberId,
       });
       return transactions;
     } catch {
