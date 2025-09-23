@@ -59,6 +59,11 @@ export declare class JsonServerController {
     deleteUserClub(id: string): Promise<{
         message: string;
     }>;
+    getNotifications(query: any): Promise<any[]>;
+    getNotification(id: string): Promise<any>;
+    createNotification(body: any): Promise<any>;
+    updateNotification(id: string, body: any): Promise<any>;
+    deleteNotification(id: string): Promise<void>;
     getFeedbacks(query: any): Promise<any[]>;
     getFeedback(id: string): Promise<any>;
     createFeedback(body: any): Promise<any>;

@@ -2,7 +2,7 @@ import {
   Injectable,
   UnauthorizedException,
   BadRequestException,
-  InternalServerErrorException
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { CreateFlagChargeDto } from './dto/create-flag-charge.dto';
 import { JsonServerService } from '../../services/json-server.service';
@@ -10,9 +10,7 @@ import { uploadFileHandler } from 'src/utils/uploadFileHandler';
 
 @Injectable()
 export class FlagChargeService {
-  constructor(
-    private readonly jsonServerService: JsonServerService,
-  ) {}
+  constructor(private readonly jsonServerService: JsonServerService) {}
 
   async create(
     { reasons, comment }: CreateFlagChargeDto,
@@ -53,7 +51,12 @@ export class FlagChargeService {
           throw new UnauthorizedException('You can only flag your own charges');
         }
       }
-
+      const actingUser = await this.jsonServerService.getUser(userId);
+      if (String(transaction.clubId) !== String(actingUser.currently_at)) {
+        throw new UnauthorizedException(
+          'You can only flag charges in your current club',
+        );
+      }
       // 3. Validation: only pending or approved can be flagged
       if (
         transaction.status !== 'pending' &&
@@ -99,7 +102,7 @@ export class FlagChargeService {
         {
           flagChargeId: flagCharge.id,
           status: 'refused',
-          verifyCharge:false,
+          verifyCharge: false,
           date: transaction.date, // preserve original date
           createdAt: transaction.createdAt,
           updatedAt: new Date().toISOString(),
@@ -111,6 +114,33 @@ export class FlagChargeService {
       const userInfo = allUsers.find(
         (u: any) => String(u.id) === String(updatedTransaction.userId),
       );
+      const parentInfo = allUsers.find(
+        (u: any) => String(u.id) === String(userId),
+      );
+
+      // 8. Get club info
+      const clubDetails = await this.jsonServerService.getClub(
+        transaction.clubId,
+      );
+
+      //* Flag-charge Notifications
+      const parentBody = `You flagged the transaction of $${transaction.bill} made by ${userInfo?.fullname} in ${clubDetails?.name}.`;
+      await this.jsonServerService.createNotification({
+        userId,
+        clubId:clubDetails.id,
+        title: 'Transaction Flagged',
+        body: parentBody,
+      });
+
+      if (userInfo?.roles === 'submember') {
+        const childBody = `Your transaction of $${transaction.bill} was flagged by ${parentInfo?.fullname} in ${clubDetails?.name}. Please review it.`;
+        await this.jsonServerService.createNotification({
+          userId: transaction.userId,
+          clubId:clubDetails.id,
+          title: 'Transaction Flagged',
+          body: childBody,
+        });
+      }
 
       return {
         success: true,

@@ -14,7 +14,32 @@ export class MemberService {
     private readonly transactionService: TransactionsService,
     private readonly jsonServerService: JsonServerService,
   ) {}
+  async getAllNotifications(req) {
+    try {
+      const user = req.user;
+      const userId = String(user.id);
+      const clubId = String(user.currently_at);
 
+      const notifications = await this.jsonServerService.getNotifications({
+        userId,
+        clubId,
+      });
+      console.log(notifications);
+
+      return {
+        success: true,
+        message: 'Notifications fetched successfully',
+        data: { notifications },
+      };
+    } catch (error) {
+      console.error('Error fetching Notifications:', error);
+      return {
+        success: false,
+        message: 'Failed Fetch Notifications',
+        error: error.message,
+      };
+    }
+  }
   async getDashboard(req: {
     user: { id: string | number; currently_at: string | number };
   }) {

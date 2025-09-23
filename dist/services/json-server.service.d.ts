@@ -8,6 +8,7 @@ export interface DatabaseData {
     invitationCode: any[];
     feedbacks: any[];
     user_clubs: any[];
+    notifications: any[];
 }
 export declare class JsonServerService {
     private readonly logger;
@@ -79,4 +80,9 @@ export declare class JsonServerService {
     createFeedback(data: any): Promise<any>;
     updateFeedback(id: string | number, data: any): Promise<any>;
     deleteFeedback(id: string | number): Promise<void>;
+    getNotifications(query?: any): Promise<any[]>;
+    getNotification(id: string | number): Promise<any>;
+    createNotification(data: any): Promise<any>;
+    updateNotification(id: string | number, data: any): Promise<any>;
+    deleteNotification(id: string | number): Promise<void>;
 }

@@ -75,6 +75,34 @@ let TransactionsService = class TransactionsService {
                 money_spent: bill,
                 userId,
             });
+            const subMember = await this.jsonServerService.getUser(userId);
+            const parent = subMember.parentId
+                ? await this.jsonServerService.getUser(subMember.parentId)
+                : subMember;
+            const club = await this.jsonServerService.getClub(clubId);
+            const clubName = club?.name || 'Unknown Club';
+            if (subMember.roles === 'submember') {
+                await this.jsonServerService.createNotification({
+                    userId: parent.id,
+                    clubId: club.id,
+                    title: 'Transaction Performed By Submember',
+                    body: `${subMember.fullname} submitted a transaction of $${bill} in ${clubName}. Please review it.`,
+                });
+                await this.jsonServerService.createNotification({
+                    userId: subMember.id,
+                    clubId: club.id,
+                    title: 'Transaction Submitted',
+                    body: `Your transaction of $${bill} in ${clubName} has been submitted for review.`,
+                });
+            }
+            else {
+                await this.jsonServerService.createNotification({
+                    userId: subMember.id,
+                    clubId: club.id,
+                    title: 'Transaction Submitted',
+                    body: `Your transaction of $${bill} in ${clubName} has been submitted.`,
+                });
+            }
             return {
                 success: true,
                 message: 'Transaction created successfully',
@@ -370,6 +398,12 @@ let TransactionsService = class TransactionsService {
             if (!transaction) {
                 throw new common_1.BadRequestException('Transaction not found');
             }
+            const memberInfo = await this.jsonServerService.getUser(userId);
+            if (String(transaction.clubId) !== String(memberInfo.currently_at)) {
+                throw new common_1.UnauthorizedException('You can only verify transactions in your current club');
+            }
+            const club = await this.jsonServerService.getClub(transaction.clubId);
+            const clubName = club?.name || 'Unknown Club';
             const allUsers = await this.jsonServerService.getUsers();
             const subMembers = allUsers.filter((u) => String(u.parentId) === String(userId) && u.roles === 'submember');
             const allowedUserIds = new Set([
@@ -403,7 +437,23 @@ let TransactionsService = class TransactionsService {
                 createdAt: transaction.createdAt,
                 updatedAt: new Date().toISOString(),
             });
+            const title = 'Transaction Verified';
             const userInfo = allUsers.find((u) => String(u.id) === String(updatedTransaction.userId));
+            const parentInfo = allUsers.find((u) => String(u.id) === String(userId));
+            const parentBody = `You have verified the transaction of $${transaction.bill} made by ${userInfo.fullname} in ${clubName}.`;
+            await this.jsonServerService.createNotification({
+                userId,
+                clubId: club.id,
+                title,
+                body: parentBody,
+            });
+            const childBody = `Your transaction of $${transaction.bill} has been verified by ${parentInfo.fullname} in ${clubName}.`;
+            await this.jsonServerService.createNotification({
+                userId: transaction.userId,
+                clubId: club.id,
+                title,
+                body: childBody,
+            });
             return {
                 success: true,
                 message: transaction.status === 'refused'
@@ -411,7 +461,7 @@ let TransactionsService = class TransactionsService {
                     : 'Charge verified successfully',
                 data: {
                     ...updatedTransaction,
-                    userName: userInfo?.fullname || userInfo?.userName || null,
+                    userName: userInfo?.fullname || null,
                 },
             };
         }

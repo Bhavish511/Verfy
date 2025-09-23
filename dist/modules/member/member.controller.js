@@ -25,8 +25,11 @@ let MemberController = class MemberController {
     getDashboard(req) {
         return this.memberService.getDashboard(req);
     }
+    getAllNotifications(req) {
+        return this.memberService.getAllNotifications(req);
+    }
     getDashboardSummary(req, period) {
-        console.log("summary!!!");
+        console.log('summary!!!');
         return this.memberService.getMemberDashboardSummary(req, period);
     }
     switchClub(clubId, req) {
@@ -44,7 +47,7 @@ let MemberController = class MemberController {
 };
 exports.MemberController = MemberController;
 __decorate([
-    (0, common_1.Get)("get-dashboard"),
+    (0, common_1.Get)('get-dashboard'),
     (0, common_1.UseGuards)(auth_guard_1.AuthGuard),
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
@@ -52,7 +55,15 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], MemberController.prototype, "getDashboard", null);
 __decorate([
-    (0, common_1.Get)("dashboard-view"),
+    (0, common_1.Get)('notifications'),
+    (0, common_1.UseGuards)(auth_guard_1.AuthGuard),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], MemberController.prototype, "getAllNotifications", null);
+__decorate([
+    (0, common_1.Get)('dashboard-view'),
     (0, common_1.UseGuards)(auth_guard_1.AuthGuard),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Query)('period')),
@@ -61,7 +72,7 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], MemberController.prototype, "getDashboardSummary", null);
 __decorate([
-    (0, common_1.Post)("switch-club/:clubId"),
+    (0, common_1.Post)('switch-club/:clubId'),
     (0, common_1.UseGuards)(auth_guard_1.AuthGuard),
     __param(0, (0, common_1.Param)('clubId')),
     __param(1, (0, common_1.Req)()),

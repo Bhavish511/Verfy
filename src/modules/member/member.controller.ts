@@ -1,4 +1,15 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, Req,Query } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  UseGuards,
+  Req,
+  Query,
+} from '@nestjs/common';
 import { MemberService } from './member.service';
 import { CreateMemberDto } from './dto/create-member.dto';
 import { UpdateMemberDto } from './dto/update-member.dto';
@@ -8,15 +19,20 @@ import { AuthGuard } from '../auth/auth.guard';
 export class MemberController {
   constructor(private readonly memberService: MemberService) {}
 
-  @Get("get-dashboard")
+  @Get('get-dashboard')
   @UseGuards(AuthGuard)
   getDashboard(@Req() req) {
     return this.memberService.getDashboard(req);
   }
-  @Get("dashboard-view")
+  @Get('notifications')
+  @UseGuards(AuthGuard)
+  getAllNotifications(@Req() req) {
+    return this.memberService.getAllNotifications(req);
+  }
+  @Get('dashboard-view')
   @UseGuards(AuthGuard)
   getDashboardSummary(@Req() req, @Query('period') period: string) {
-    console.log("summary!!!");
+    console.log('summary!!!');
     return this.memberService.getMemberDashboardSummary(req, period);
   }
 
@@ -25,7 +41,7 @@ export class MemberController {
   // getDashboardView(@Req() req, @Query('view') view?: string) {
   //   return this.memberService.getDashboardView(req, view);
   // }
-  @Post("switch-club/:clubId")
+  @Post('switch-club/:clubId')
   @UseGuards(AuthGuard)
   switchClub(@Param('clubId') clubId: string, @Req() req) {
     return this.memberService.switchClub(clubId, req);

@@ -27,6 +27,9 @@ let SubMemberController = class SubMemberController {
     createSubMember(createSubMemberDto, req) {
         return this.subMemberService.createSubMember(createSubMemberDto, req);
     }
+    getAllNotifications(req) {
+        return this.subMemberService.getAllNotifications(req);
+    }
     removeSubMember(id) {
         return this.subMemberService.removeSubMember(id);
     }
@@ -63,6 +66,15 @@ __decorate([
     __metadata("design:paramtypes", [create_sub_member_dto_1.CreateSubMemberDto, Object]),
     __metadata("design:returntype", void 0)
 ], SubMemberController.prototype, "createSubMember", null);
+__decorate([
+    (0, common_1.Get)('notifications'),
+    (0, common_1.UseGuards)(auth_guard_1.AuthGuard),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.SUBMEMBER),
+    __param(0, (0, common_1.Req)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", void 0)
+], SubMemberController.prototype, "getAllNotifications", null);
 __decorate([
     (0, common_1.Post)('remove-sub-member/:id'),
     (0, common_1.UseGuards)(auth_guard_1.AuthGuard),

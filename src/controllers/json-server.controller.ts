@@ -443,7 +443,54 @@ export class JsonServerController {
       throw new HttpException('User club not found', HttpStatus.NOT_FOUND);
     }
   }
+  // Notification Endpoints
+  @Get('notifications')
+  async getNotifications(@Query() query:any){
+    try {
+      return await this.jsonServerService.getNotifications(query);
+    } catch (error) {
+      this.logger.error('Error getting notifications:',error);
+      throw new HttpException('Internal server error',HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+  @Get('notifications/:id')
+  async getNotification(@Param('id') id:string){
+    try {
+      return await this.jsonServerService.getNotification(id);
+    } catch (error) {
+      this.logger.error(`Error getting Notification ${id}:`,error);
+      throw new HttpException('Notification Not Found',HttpStatus.NOT_FOUND)
+    }
+  }
+  @Post('notifications')
+  async createNotification(@Body() body:any){
+    try {
+      return await this.jsonServerService.createNotification(body);
+    } catch (error) {
+      this.logger.error('Error creating Notification:',error);
+      throw new HttpException('Internal server error',HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
+  @Put('notifications/:id')
+  @Patch('notifications/:id')
+  async updateNotification(@Param('id') id:string, @Body() body: any){
+    try {
+      return await this.jsonServerService.updateNotification(id,body);
+    } catch (error) {
+      this.logger.error(`Error updating Notification ${id}:`,error);
+      throw new HttpException('Notification Not Found',HttpStatus.NOT_FOUND)
+    }
+  }
 
+  @Delete('notifications/:id')
+  async deleteNotification(@Param('id') id:string){
+    try {
+      return await this.jsonServerService.deleteNotification(id);
+    } catch (error) {
+      this.logger.error(`Error deleting Notification ${id}:`, error);
+      throw new HttpException('Notification Not Found', HttpStatus.NOT_FOUND);
+    }
+  }
   // Feedbacks endpoints
   @Get('feedbacks')
   async getFeedbacks(@Query() query: any) {
@@ -496,6 +543,7 @@ export class JsonServerController {
       throw new HttpException('Feedback not found', HttpStatus.NOT_FOUND);
     }
   }
+
 
   // Database management endpoints
   @Get('stats')

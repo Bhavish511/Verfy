@@ -12,6 +12,7 @@ export interface DatabaseData {
   invitationCode: any[];
   feedbacks: any[];
   user_clubs: any[];
+  notifications :any[];
 }
 
 @Injectable()
@@ -45,6 +46,7 @@ export class JsonServerService {
           invitationCode: [],
           feedbacks: [],
           user_clubs: [],
+          notifications: [],
         };
         this.saveDatabase();
         this.logger.log('New database created');
@@ -224,6 +226,7 @@ export class JsonServerService {
         'totalAllowance',
         'billingCycle',
       ],
+      notifications: ['userId','clubId','title','body'],
     };
 
     const fields = requiredFields[collection] || [];
@@ -266,6 +269,7 @@ export class JsonServerService {
       invitationCode: this.data.invitationCode.length,
       feedbacks: this.data.feedbacks.length,
       user_clubs: this.data.user_clubs.length,
+      Notification: this.data.notifications.length,
       lastUpdated: new Date().toISOString(),
     };
     return stats;
@@ -501,5 +505,26 @@ export class JsonServerService {
 
   async deleteFeedback(id: string | number): Promise<void> {
     return this.delete('feedbacks', id);
+  }
+
+  //Notifications
+  async getNotifications(query?: any): Promise<any[]> {
+    return this.findAll('notifications', query);
+  }
+
+  async getNotification(id: string | number): Promise<any> {
+    return this.findOne('notifications', id);
+  }
+
+  async createNotification(data: any): Promise<any> {
+    return this.create('notifications', data);
+  }
+
+  async updateNotification(id: string | number, data: any): Promise<any> {
+    return this.update('notifications', id, data);
+  }
+
+  async deleteNotification(id: string | number): Promise<void> {
+    return this.delete('notifications', id);
   }
 }

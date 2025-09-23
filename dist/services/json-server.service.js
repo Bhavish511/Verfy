@@ -75,6 +75,7 @@ let JsonServerService = JsonServerService_1 = class JsonServerService {
                     invitationCode: [],
                     feedbacks: [],
                     user_clubs: [],
+                    notifications: [],
                 };
                 this.saveDatabase();
                 this.logger.log('New database created');
@@ -204,6 +205,7 @@ let JsonServerService = JsonServerService_1 = class JsonServerService {
                 'totalAllowance',
                 'billingCycle',
             ],
+            notifications: ['userId', 'clubId', 'title', 'body'],
         };
         const fields = requiredFields[collection] || [];
         const missingFields = fields.filter((field) => !data[field]);
@@ -234,6 +236,7 @@ let JsonServerService = JsonServerService_1 = class JsonServerService {
             invitationCode: this.data.invitationCode.length,
             feedbacks: this.data.feedbacks.length,
             user_clubs: this.data.user_clubs.length,
+            Notification: this.data.notifications.length,
             lastUpdated: new Date().toISOString(),
         };
         return stats;
@@ -413,6 +416,21 @@ let JsonServerService = JsonServerService_1 = class JsonServerService {
     }
     async deleteFeedback(id) {
         return this.delete('feedbacks', id);
+    }
+    async getNotifications(query) {
+        return this.findAll('notifications', query);
+    }
+    async getNotification(id) {
+        return this.findOne('notifications', id);
+    }
+    async createNotification(data) {
+        return this.create('notifications', data);
+    }
+    async updateNotification(id, data) {
+        return this.update('notifications', id, data);
+    }
+    async deleteNotification(id) {
+        return this.delete('notifications', id);
     }
 };
 exports.JsonServerService = JsonServerService;

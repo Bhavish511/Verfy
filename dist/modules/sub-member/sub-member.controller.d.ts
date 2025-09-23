@@ -19,6 +19,19 @@ export declare class SubMemberController {
         error: any;
         data?: undefined;
     }>;
+    getAllNotifications(req: any): Promise<{
+        success: boolean;
+        message: string;
+        data: {
+            notifications: any[];
+        };
+        error?: undefined;
+    } | {
+        success: boolean;
+        message: string;
+        error: any;
+        data?: undefined;
+    }>;
     removeSubMember(id: string): Promise<{
         success: boolean;
         message: string;

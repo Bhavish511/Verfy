@@ -18,7 +18,12 @@ export class SubMemberController {
   createSubMember(@Body() createSubMemberDto:CreateSubMemberDto,@Req() req) {
     return this.subMemberService.createSubMember(createSubMemberDto,req);
   }
-
+  @Get('notifications')
+  @UseGuards(AuthGuard)
+  @Roles(Role.SUBMEMBER)
+  getAllNotifications(@Req() req){
+    return this.subMemberService.getAllNotifications(req);
+  }
   @Post('remove-sub-member/:id')
   @UseGuards(AuthGuard)
   @Roles(Role.MEMBER)

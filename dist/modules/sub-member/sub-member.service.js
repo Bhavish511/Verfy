@@ -28,6 +28,31 @@ let SubMemberService = SubMemberService_1 = class SubMemberService {
     fields = {
         roles: 'submember',
     };
+    async getAllNotifications(req) {
+        try {
+            const user = req.user;
+            const userId = String(user.id);
+            const clubId = String(user.currently_at);
+            const notifications = await this.jsonServerService.getNotifications({
+                userId,
+                clubId,
+            });
+            console.log(notifications);
+            return {
+                success: true,
+                message: 'Notifications fetched successfully',
+                data: { notifications },
+            };
+        }
+        catch (error) {
+            console.error('Error fetching Notifications:', error);
+            return {
+                success: false,
+                message: 'Failed Fetch Notifications',
+                error: error.message,
+            };
+        }
+    }
     async switchClub(clubId, req) {
         try {
             const user = req.user;
@@ -119,7 +144,7 @@ let SubMemberService = SubMemberService_1 = class SubMemberService {
             for (const clubId of clubIds) {
                 const transaction1Bill = Math.floor(allowance * 0.3);
                 const transaction2Bill = Math.floor(allowance * 0.2);
-                await Promise.all([
+                const [tx1, tx2] = await Promise.all([
                     this.jsonServerService.createTransaction({
                         clubId,
                         userId: subMember.id,
@@ -153,6 +178,27 @@ let SubMemberService = SubMemberService_1 = class SubMemberService {
                 if (userClub) {
                     await this.jsonServerService.updateUserClub(userClub.id, {
                         totalSpent: (userClub.totalSpent || 0) + transaction1Bill + transaction2Bill,
+                    });
+                }
+                const clubDetails = await this.jsonServerService.getClub(clubId);
+                await this.jsonServerService.createNotification({
+                    userId: parent.id,
+                    clubId,
+                    title: 'New Submember Created',
+                    body: `You have successfully created '${subMember.fullname}' under '${clubDetails?.name}'.`,
+                });
+                for (const tx of [tx1, tx2]) {
+                    await this.jsonServerService.createNotification({
+                        userId: parent.id,
+                        clubId,
+                        title: 'Transaction Performed by Submember',
+                        body: `${subMember.fullname} submitted a transaction of $${tx.bill} in ${clubDetails?.name}. Please review it.`,
+                    });
+                    await this.jsonServerService.createNotification({
+                        userId: subMember.id,
+                        clubId,
+                        title: 'Transaction Submitted',
+                        body: `Your transaction of $${tx.bill} in ${clubDetails?.name} has been submitted for review.`,
                     });
                 }
             }
@@ -292,6 +338,7 @@ let SubMemberService = SubMemberService_1 = class SubMemberService {
                     data: null,
                 };
             }
+            const previousAllowance = userClub.totalAllowance || 0;
             if (allowance <= (userClub.totalSpent || 0)) {
                 return {
                     success: false,
@@ -303,6 +350,21 @@ let SubMemberService = SubMemberService_1 = class SubMemberService {
             console.log(updatedUserClub);
             const data = await this.jsonServerService.getUserClub(userClub.id);
             console.log(data);
+            const clubDetails = await this.jsonServerService.getClub(parentData.currently_at);
+            const parentBody = `You updated ${subMember.fullname}'s allowance from $${previousAllowance} to $${allowance} in ${clubDetails?.name}.`;
+            await this.jsonServerService.createNotification({
+                userId: parentData.id,
+                clubId: clubDetails.id,
+                title: 'Allowance Updated',
+                body: parentBody,
+            });
+            const childBody = `Your allowance has been updated from $${previousAllowance} to $${allowance} by ${parentData.fullname} in ${clubDetails?.name}.`;
+            await this.jsonServerService.createNotification({
+                userId: subMember.id,
+                clubId: clubDetails.id,
+                title: 'Allowance Updated',
+                body: childBody,
+            });
             return {
                 success: true,
                 message: 'New Allowance Set!',

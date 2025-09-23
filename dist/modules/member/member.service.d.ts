@@ -5,6 +5,19 @@ export declare class MemberService {
     private readonly transactionService;
     private readonly jsonServerService;
     constructor(transactionService: TransactionsService, jsonServerService: JsonServerService);
+    getAllNotifications(req: any): Promise<{
+        success: boolean;
+        message: string;
+        data: {
+            notifications: any[];
+        };
+        error?: undefined;
+    } | {
+        success: boolean;
+        message: string;
+        error: any;
+        data?: undefined;
+    }>;
     getDashboard(req: {
         user: {
             id: string | number;

@@ -42,6 +42,10 @@ let FlagChargeService = class FlagChargeService {
                     throw new common_1.UnauthorizedException('You can only flag your own charges');
                 }
             }
+            const actingUser = await this.jsonServerService.getUser(userId);
+            if (String(transaction.clubId) !== String(actingUser.currently_at)) {
+                throw new common_1.UnauthorizedException('You can only flag charges in your current club');
+            }
             if (transaction.status !== 'pending' &&
                 transaction.status !== 'approved') {
                 throw new common_1.BadRequestException('Only pending or approved transactions can be flagged');
@@ -77,6 +81,24 @@ let FlagChargeService = class FlagChargeService {
             });
             const allUsers = await this.jsonServerService.getUsers();
             const userInfo = allUsers.find((u) => String(u.id) === String(updatedTransaction.userId));
+            const parentInfo = allUsers.find((u) => String(u.id) === String(userId));
+            const clubDetails = await this.jsonServerService.getClub(transaction.clubId);
+            const parentBody = `You flagged the transaction of $${transaction.bill} made by ${userInfo?.fullname} in ${clubDetails?.name}.`;
+            await this.jsonServerService.createNotification({
+                userId,
+                clubId: clubDetails.id,
+                title: 'Transaction Flagged',
+                body: parentBody,
+            });
+            if (userInfo?.roles === 'submember') {
+                const childBody = `Your transaction of $${transaction.bill} was flagged by ${parentInfo?.fullname} in ${clubDetails?.name}. Please review it.`;
+                await this.jsonServerService.createNotification({
+                    userId: transaction.userId,
+                    clubId: clubDetails.id,
+                    title: 'Transaction Flagged',
+                    body: childBody,
+                });
+            }
             return {
                 success: true,
                 message: 'Charge flagged successfully',

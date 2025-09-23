@@ -72,7 +72,6 @@ export class TransactionsService {
   ) {
     try {
       const userId = String(req.user.id);
-
       // 1. Find the user_club for this user + club
       const [userClub] = await this.jsonServerService.getUserClubs({
         userId,
@@ -115,6 +114,40 @@ export class TransactionsService {
         money_spent: bill,
         userId,
       });
+      //* Transaction creation notification
+      // 6. Fetch user + parent info for notifications
+      const subMember = await this.jsonServerService.getUser(userId);
+      const parent = subMember.parentId
+        ? await this.jsonServerService.getUser(subMember.parentId)
+        : subMember;
+
+      const club = await this.jsonServerService.getClub(clubId);
+      const clubName = club?.name || 'Unknown Club';
+      if (subMember.roles === 'submember') {
+        // Notify parent
+        await this.jsonServerService.createNotification({
+          userId: parent.id,
+          clubId:club.id,
+          title: 'Transaction Performed By Submember',
+          body: `${subMember.fullname} submitted a transaction of $${bill} in ${clubName}. Please review it.`,
+        });
+
+        // Notify submember
+        await this.jsonServerService.createNotification({
+          userId: subMember.id,
+          clubId:club.id,
+          title: 'Transaction Submitted',
+          body: `Your transaction of $${bill} in ${clubName} has been submitted for review.`,
+        });
+      } else {
+        // If primary member makes transaction, notify only them
+        await this.jsonServerService.createNotification({
+          userId: subMember.id,
+          clubId:club.id,
+          title: 'Transaction Submitted',
+          body: `Your transaction of $${bill} in ${clubName} has been submitted.`,
+        });
+      }
 
       return {
         success: true,
@@ -560,6 +593,20 @@ export class TransactionsService {
         throw new BadRequestException('Transaction not found');
       }
 
+      // 🔹 Get member info for club check
+      const memberInfo = await this.jsonServerService.getUser(userId);
+
+      // 🔒 Ensure transaction belongs to the member's current club
+      if (String(transaction.clubId) !== String(memberInfo.currently_at)) {
+        throw new UnauthorizedException(
+          'You can only verify transactions in your current club',
+        );
+      }
+
+      //  Fetch the club for clubName
+      const club = await this.jsonServerService.getClub(transaction.clubId);
+      const clubName = club?.name || 'Unknown Club';
+
       // 3. Ensure the transaction belongs to this member or submember
       const allUsers = await this.jsonServerService.getUsers();
       const subMembers = allUsers.filter(
@@ -583,11 +630,11 @@ export class TransactionsService {
         throw new BadRequestException('Transaction is already verified');
       }
 
-      // ✅ Case A: Pending → approve directly
+      // Case A: Pending → approve directly
       if (transaction.status === 'pending') {
         // no extra work
       }
-      // ✅ Case B: Refused + flagged → remove flagCharge
+      // Case B: Refused + flagged → remove flagCharge
       else if (transaction.status === 'refused' && transaction.flagChargeId) {
         const flagCharges = await this.jsonServerService.getFlagCharges({
           transactionId: transaction.id,
@@ -597,7 +644,7 @@ export class TransactionsService {
           await this.jsonServerService.deleteFlagCharge(flagCharges[0].id);
         }
       }
-      // ❌ Invalid case
+      //  Invalid case
       else {
         throw new BadRequestException(
           'Only pending or flagged (refused) transactions can be verified',
@@ -617,11 +664,31 @@ export class TransactionsService {
           updatedAt: new Date().toISOString(),
         },
       );
-
-      // 6. Attach userName from the user list
+      const title: string = 'Transaction Verified';
+      // 6. Get user info
       const userInfo = allUsers.find(
         (u: any) => String(u.id) === String(updatedTransaction.userId),
       );
+      const parentInfo = allUsers.find(
+        (u: any) => String(u.id) === String(userId),
+      );
+
+      //* Verify Charge Notifications
+      const parentBody = `You have verified the transaction of $${transaction.bill} made by ${userInfo.fullname} in ${clubName}.`;
+      await this.jsonServerService.createNotification({
+        userId,
+        clubId:club.id,
+        title,
+        body: parentBody,
+      });
+
+      const childBody = `Your transaction of $${transaction.bill} has been verified by ${parentInfo.fullname} in ${clubName}.`;
+      await this.jsonServerService.createNotification({
+        userId: transaction.userId,
+        clubId:club.id,
+        title,
+        body: childBody,
+      });
 
       return {
         success: true,
@@ -631,7 +698,7 @@ export class TransactionsService {
             : 'Charge verified successfully',
         data: {
           ...updatedTransaction,
-          userName: userInfo?.fullname || userInfo?.userName || null,
+          userName: userInfo?.fullname || null,
         },
       };
     } catch (error) {

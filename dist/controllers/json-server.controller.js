@@ -390,6 +390,51 @@ let JsonServerController = JsonServerController_1 = class JsonServerController {
             throw new common_1.HttpException('User club not found', common_1.HttpStatus.NOT_FOUND);
         }
     }
+    async getNotifications(query) {
+        try {
+            return await this.jsonServerService.getNotifications(query);
+        }
+        catch (error) {
+            this.logger.error('Error getting notifications:', error);
+            throw new common_1.HttpException('Internal server error', common_1.HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    async getNotification(id) {
+        try {
+            return await this.jsonServerService.getNotification(id);
+        }
+        catch (error) {
+            this.logger.error(`Error getting Notification ${id}:`, error);
+            throw new common_1.HttpException('Notification Not Found', common_1.HttpStatus.NOT_FOUND);
+        }
+    }
+    async createNotification(body) {
+        try {
+            return await this.jsonServerService.createNotification(body);
+        }
+        catch (error) {
+            this.logger.error('Error creating Notification:', error);
+            throw new common_1.HttpException('Internal server error', common_1.HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+    async updateNotification(id, body) {
+        try {
+            return await this.jsonServerService.updateNotification(id, body);
+        }
+        catch (error) {
+            this.logger.error(`Error updating Notification ${id}:`, error);
+            throw new common_1.HttpException('Notification Not Found', common_1.HttpStatus.NOT_FOUND);
+        }
+    }
+    async deleteNotification(id) {
+        try {
+            return await this.jsonServerService.deleteNotification(id);
+        }
+        catch (error) {
+            this.logger.error(`Error deleting Notification ${id}:`, error);
+            throw new common_1.HttpException('Notification Not Found', common_1.HttpStatus.NOT_FOUND);
+        }
+    }
     async getFeedbacks(query) {
         try {
             return await this.jsonServerService.getFeedbacks(query);
@@ -770,6 +815,43 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], JsonServerController.prototype, "deleteUserClub", null);
+__decorate([
+    (0, common_1.Get)('notifications'),
+    __param(0, (0, common_1.Query)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], JsonServerController.prototype, "getNotifications", null);
+__decorate([
+    (0, common_1.Get)('notifications/:id'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], JsonServerController.prototype, "getNotification", null);
+__decorate([
+    (0, common_1.Post)('notifications'),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object]),
+    __metadata("design:returntype", Promise)
+], JsonServerController.prototype, "createNotification", null);
+__decorate([
+    (0, common_1.Put)('notifications/:id'),
+    (0, common_1.Patch)('notifications/:id'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", Promise)
+], JsonServerController.prototype, "updateNotification", null);
+__decorate([
+    (0, common_1.Delete)('notifications/:id'),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], JsonServerController.prototype, "deleteNotification", null);
 __decorate([
     (0, common_1.Get)('feedbacks'),
     __param(0, (0, common_1.Query)()),
