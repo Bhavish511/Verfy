@@ -12,6 +12,7 @@ import { JsonServerService } from '../../services/json-server.service';
 import { TransactionsService } from '../transactions/transactions.service';
 
 import { Logger } from '@nestjs/common';
+import { dateTimestampProvider } from 'rxjs/dist/types/internal/scheduler/dateTimestampProvider';
 const log = new Logger('SubMemberService');
 type InvitationCodeRow = {
   id: string;
@@ -48,8 +49,8 @@ export class SubMemberService {
         userId,
         clubId,
       });
+      notifications.sort((a, b)=> new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()); 
       console.log(notifications);
-
       return {
         success: true,
         message: 'Notifications fetched successfully',

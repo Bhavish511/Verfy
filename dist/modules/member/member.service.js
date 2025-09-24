@@ -29,6 +29,7 @@ let MemberService = class MemberService {
                 userId,
                 clubId,
             });
+            notifications.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
             console.log(notifications);
             return {
                 success: true,
