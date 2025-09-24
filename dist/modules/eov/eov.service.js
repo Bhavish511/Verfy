@@ -108,14 +108,18 @@ let EovService = class EovService {
             const { filteredTransactions, periodInfo } = this.filterTransactionsByPeriod(memberTransactions, period);
             const totalSpending = filteredTransactions.reduce((sum, tx) => sum + (Number(tx.bill) || 0), 0);
             const totalAllowance = await this.calculateTotalAllowance(member, subMembers);
-            const flaggedTransactions = filteredTransactions.filter((tx) => tx.flagChargeId !== null && tx.flagChargeId !== undefined);
+            const flaggedTransactions = filteredTransactions.filter((tx) => typeof tx.flagChargeId === 'string' ||
+                typeof tx.flagChargeId === 'number');
+            const unverifiedSpends = filteredTransactions.filter((tx) => !tx.verifyCharge &&
+                !(typeof tx.flagChargeId === 'string' ||
+                    typeof tx.flagChargeId === 'number'));
             const flagCharges = await this.jsonServerService.getFlagCharges();
             const memberFlagCharges = flagCharges.filter((fc) => allUserIds.includes(String(fc.userId)));
             const categoryBreakdown = this.calculateCategoryBreakdown(filteredTransactions);
             const statusBreakdown = this.calculateStatusBreakdown(filteredTransactions);
             const timeBreakdown = this.calculateTimeBreakdown(filteredTransactions, period);
             const verifiedSpends = filteredTransactions.filter((tx) => tx.status === 'approved' && tx.verifyCharge === true);
-            const flaggedCharges = filteredTransactions.filter((tx) => tx.flagChargeId !== null && tx.flagChargeId !== undefined);
+            const flaggedCharges = flaggedTransactions;
             const clubBreakdown = await this.getClubAndMemberBreakdown(member, subMembers, filteredTransactions);
             return {
                 success: true,
@@ -137,7 +141,12 @@ let EovService = class EovService {
                     verifiedSpends: {
                         count: verifiedSpends.length,
                         totalAmount: verifiedSpends.reduce((sum, tx) => sum + (Number(tx.bill) || 0), 0),
-                        transactions: verifiedSpends,
+                        verifiedtransactions: verifiedSpends,
+                    },
+                    unverifiedSpends: {
+                        count: unverifiedSpends.length,
+                        totalAmount: unverifiedSpends.reduce((sum, tx) => sum + (Number(tx.bill) || 0), 0),
+                        Unverifiedtransactions: unverifiedSpends,
                     },
                     flaggedCharges: {
                         count: flaggedCharges.length,
@@ -150,6 +159,7 @@ let EovService = class EovService {
                         fullname: sm.fullname,
                         email: sm.email,
                     })),
+                    transactionDetails: filteredTransactions,
                 },
             };
         }
@@ -467,7 +477,8 @@ let EovService = class EovService {
                 (entry.categories[category] || 0) + (Number(tx.bill) || 0);
             const status = tx.status || 'unknown';
             entry.status[status] = (entry.status[status] || 0) + 1;
-            if (tx.flagChargeId !== null && tx.flagChargeId !== undefined) {
+            if (typeof tx.flagChargeId === 'string' ||
+                typeof tx.flagChargeId === 'number') {
                 entry.flaggedCount += 1;
             }
         });
@@ -555,6 +566,10 @@ let EovService = class EovService {
             const filePath = path.join(uploadDir, fileName);
             const stream = fs.createWriteStream(filePath);
             doc.pipe(stream);
+            const left = doc.page.margins.left;
+            const right = doc.page.width - doc.page.margins.right;
+            const top = doc.page.margins.top;
+            const bottom = doc.page.height - doc.page.margins.bottom;
             const safeMoveDown = (n = 0.5) => {
                 try {
                     doc.moveDown(n);
@@ -562,10 +577,101 @@ let EovService = class EovService {
                 catch {
                 }
             };
-            const formatCurrency = (val) => `$${(val || 0).toLocaleString(undefined, {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-            })}`;
+            const formatCurrency = (val) => `$${(val || 0).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+            const section = (title) => {
+                doc.x = doc.page.margins.left;
+                doc.font('Helvetica-Bold').fontSize(14).text(title);
+                doc.font('Helvetica').fontSize(11);
+                safeMoveDown(0.4);
+            };
+            const drawTable = (opts) => {
+                const { title, columns, rows, startY, gap = 6, headerFontSize = 9, rowFontSize = 8, rowPaddingY = 4, zebra = false, } = opts;
+                const availableWidth = right - left;
+                const naturalWidth = columns.reduce((s, c) => s + c.width, 0) + gap * (columns.length - 1);
+                let scale = 1;
+                if (naturalWidth > availableWidth)
+                    scale =
+                        (availableWidth - gap * (columns.length - 1)) /
+                            (naturalWidth - gap * (columns.length - 1));
+                const cols = columns.map((c) => ({
+                    ...c,
+                    width: Math.floor(c.width * scale),
+                }));
+                const xPositions = [];
+                let x = left;
+                for (let i = 0; i < cols.length; i++) {
+                    xPositions.push(x);
+                    x += cols[i].width + gap;
+                }
+                let y = startY ?? doc.y;
+                const ensurePage = (need, redrawHeader) => {
+                    if (y + need > bottom) {
+                        doc.addPage();
+                        y = top;
+                        if (redrawHeader)
+                            drawHeader();
+                    }
+                };
+                const drawHeader = () => {
+                    if (title) {
+                        doc.font('Helvetica-Bold').fontSize(11).text(title, left, y);
+                        y += doc.heightOfString(title, { width: availableWidth }) + 6;
+                    }
+                    doc.font('Helvetica-Bold').fontSize(headerFontSize);
+                    let headerHeights = [];
+                    for (let i = 0; i < cols.length; i++) {
+                        const h = doc.heightOfString(cols[i].label, {
+                            width: cols[i].width,
+                            align: 'left',
+                        });
+                        headerHeights.push(h);
+                    }
+                    const headerH = Math.max(...headerHeights) + rowPaddingY * 2;
+                    ensurePage(headerH + 6, false);
+                    const headerY = y + rowPaddingY;
+                    for (let i = 0; i < cols.length; i++) {
+                        doc.text(cols[i].label, xPositions[i], headerY, {
+                            width: cols[i].width,
+                            align: 'left',
+                        });
+                    }
+                    y += headerH;
+                    doc.moveTo(left, y).lineTo(right, y).stroke();
+                    y += 2;
+                    doc.font('Helvetica').fontSize(rowFontSize);
+                };
+                drawHeader();
+                for (let r = 0; r < rows.length; r++) {
+                    const row = rows[r];
+                    const heights = cols.map((c, i) => {
+                        const text = (row[c.key] ?? '').toString();
+                        return doc.heightOfString(text, {
+                            width: c.width,
+                            align: c.align ?? 'left',
+                        });
+                    });
+                    const rowHeight = Math.max(...heights) + rowPaddingY * 2;
+                    ensurePage(rowHeight, true);
+                    if (zebra && r % 2 === 1) {
+                        doc.save().fillColor('#F5F7FA');
+                        doc.rect(left, y, availableWidth, rowHeight).fill();
+                        doc.restore();
+                    }
+                    const textY = y + rowPaddingY;
+                    for (let i = 0; i < cols.length; i++) {
+                        const c = cols[i];
+                        const text = (row[c.key] ?? '').toString();
+                        const padding = c.align === 'right' ? 8 : 0;
+                        doc.text(text, xPositions[i], textY, {
+                            width: c.width - padding,
+                            align: c.align ?? 'left',
+                        });
+                    }
+                    y += rowHeight;
+                }
+                y += 6;
+                return y;
+            };
             doc.fontSize(20).text('Transactions Report', { align: 'center' });
             safeMoveDown(0.3);
             doc
@@ -580,20 +686,13 @@ let EovService = class EovService {
                 .text(`Generated: ${new Date().toLocaleString()}`, { align: 'center' })
                 .fillColor('black');
             safeMoveDown(1);
-            const section = (title) => {
-                doc.font('Helvetica-Bold').fontSize(14).text(title);
-                doc.font('Helvetica').fontSize(11);
-                safeMoveDown(0.4);
-            };
             section('Member & Club');
             doc.text(`Member: ${member.fullname ?? member.id}`);
             doc.text(`Email:  ${member.email ?? '—'}`);
             doc.text(`Club:   ${club?.name ?? 'Unknown'} (${club?.location ?? '—'})`);
             safeMoveDown(0.8);
             section('Club Finance Summary');
-            const userClub = userClubs.find((uc) => String(uc.userId) === String(member.id) &&
-                String(uc.clubId) === String(club?.id));
-            if (userClubs) {
+            if (userClubs.length) {
                 const totalAllowance = userClubs.reduce((sum, uc) => sum + (uc.totalAllowance || 0), 0);
                 const totalSpent = userClubs.reduce((sum, uc) => sum + (uc.totalSpent || 0), 0);
                 const remaining = totalAllowance - totalSpent;
@@ -602,9 +701,7 @@ let EovService = class EovService {
                 doc.text(`Remaining:       ${formatCurrency(remaining || 0)}`);
             }
             else {
-                doc
-                    .fontSize(10)
-                    .text('No user_club record found for this member in this club.');
+                doc.fontSize(10).text('No user_club record found for this member.');
             }
             safeMoveDown(0.8);
             section('Sub-members');
@@ -613,7 +710,34 @@ let EovService = class EovService {
             }
             else {
                 submembers.forEach((s, i) => {
-                    doc.text(`${i + 1}. ${s.fullname ?? s.id}  •  ${s.email ?? '—'}`);
+                    const uc = userClubs.find((uc) => uc.userId === s.id && uc.clubId === club?.id);
+                    const allowance = uc ? formatCurrency(uc.totalAllowance || 0) : 'N/A';
+                    const spent = uc ? formatCurrency(uc.totalSpent || 0) : 'N/A';
+                    const remaining = uc && typeof uc.totalAllowance === 'number'
+                        ? formatCurrency((uc.totalAllowance || 0) - (uc.totalSpent || 0))
+                        : 'N/A';
+                    const startY = doc.y;
+                    doc
+                        .rect(doc.page.margins.left, startY, doc.page.width - 80, 55)
+                        .fill('#f7f7f7')
+                        .stroke();
+                    doc.fillColor('black').fontSize(11);
+                    doc.text(`${i + 1}. ${s.fullname ?? s.id}`, 50, startY + 8, {
+                        continued: true,
+                        bold: true,
+                    });
+                    doc
+                        .fontSize(10)
+                        .fillColor('#444')
+                        .text(` • ${s.email ?? '—'}`);
+                    doc.moveDown(0.3);
+                    doc
+                        .fontSize(10)
+                        .fillColor('black')
+                        .text(`   Allowance: ${allowance}`)
+                        .text(`   Spent: ${spent}`)
+                        .text(`   Remaining: ${remaining}`);
+                    doc.moveDown(0.5).fillColor('black');
                 });
             }
             safeMoveDown(1);
@@ -646,65 +770,97 @@ let EovService = class EovService {
                 cats.forEach(([cat, amount]) => doc.text(`- ${cat}: ${formatCurrency(amount)}`));
             }
             safeMoveDown(1);
-            const timeBreakdown = this.calculateTimeBreakdown(transactions, periodInfo.name.toLowerCase());
-            if (timeBreakdown.length > 0) {
-                section(`${periodInfo.name} Breakdown`);
-                doc.fontSize(10);
-                timeBreakdown.forEach((entry, idx) => {
-                    doc.text(`${idx + 1}. ${entry.date}: ${entry.transactions} transactions, ${formatCurrency(entry.totalSpent)} spent`);
-                    safeMoveDown(0.2);
-                });
-                safeMoveDown(0.8);
-            }
             section('Transactions (Detailed)');
-            if (!transactions.length) {
-                doc.fontSize(10).text('No transactions found for this period.');
+            const normalTx = transactions.filter((t) => t?.status !== 'refused' &&
+                !(typeof t.flagChargeId === 'string' ||
+                    typeof t.flagChargeId === 'number'));
+            if (!normalTx.length) {
+                doc.fontSize(10).text('No normal transactions found for this period.');
             }
             else {
-                doc.fontSize(10);
-                const pageBottom = () => (Number(doc.page?.height) || 842) - 80;
-                transactions.forEach((t, idx) => {
-                    const spender = usersById.get(String(t.userId));
-                    const spenderLine = spender
-                        ? `${spender.fullname ?? spender.id} / ${spender.email ?? '—'} / ${spender.roles ?? '—'}`
+                const txRows = normalTx.map((t) => {
+                    const u = usersById.get(String(t.userId));
+                    const spender = u
+                        ? `${u.fullname ?? u.id}${u.email ? `\n${u.email}` : ''}`
                         : `Unknown (${t.userId})`;
-                    const line = `${idx + 1}. ` +
-                        `Txn: ${t.id} | Club: ${club?.name} | Category: ${t.category} | ` +
-                        `Bill: ${formatCurrency(Number(t.bill) || 0)} | Status: ${t.status} | Verified: ${t.verifyCharge ? 'Yes' : 'No'} | ` +
-                        `Flag: ${t.flagChargeId ?? ''}\n` +
-                        `    Spender: ${spenderLine}`;
-                    doc.text(line);
-                    safeMoveDown(0.2);
-                    try {
-                        if (Number(doc.y) > pageBottom())
-                            doc.addPage();
-                    }
-                    catch {
-                    }
+                    return {
+                        id: String(t.id),
+                        club: club?.name ?? '—',
+                        category: t.category ?? '—',
+                        bill: formatCurrency(Number(t.bill) || 0),
+                        status: t.status ?? '—',
+                        verified: t.verifyCharge ? 'Yes' : 'No',
+                        spender,
+                    };
                 });
+                const txCols = [
+                    { key: 'id', label: 'Txn ID', width: 90 },
+                    { key: 'club', label: 'Club', width: 110 },
+                    { key: 'category', label: 'Category', width: 95 },
+                    { key: 'bill', label: 'Bill', width: 60, align: 'right' },
+                    { key: 'status', label: 'Status', width: 80 },
+                    { key: 'verified', label: 'Verified', width: 70 },
+                    { key: 'spender', label: 'Spender', width: 140 },
+                ];
+                const nextY = drawTable({
+                    columns: txCols,
+                    rows: txRows,
+                    startY: doc.y,
+                    zebra: true,
+                });
+                doc.y = nextY;
             }
-            safeMoveDown(1.2);
+            safeMoveDown(1);
+            doc.fontSize(10).fillColor('black');
             section('Flagged Charges');
-            if (!flagCharges.length) {
+            const flaggedSpends = transactions.filter((t) => t?.status === 'refused' ||
+                typeof t.flagChargeId === 'string' ||
+                typeof t.flagChargeId === 'number');
+            if (!flaggedSpends.length) {
                 doc.fontSize(10).text('No flagged charges.');
             }
             else {
-                flagCharges.forEach((f, idx) => {
-                    doc
-                        .fontSize(11)
-                        .text(`#${idx + 1} (ID: ${f.id})  Owner: ${member.fullname}`);
-                    doc.fontSize(10).text(`Comment: ${f.comment}`);
-                    if (Array.isArray(f.reasons) && f.reasons.length) {
-                        doc.text(`Reasons: ${f.reasons.join(', ')}`);
-                    }
-                    safeMoveDown(0.3);
-                    try {
-                        const bottom = (Number(doc.page?.height) || 842) - 80;
-                        if (Number(doc.y) > bottom)
-                            doc.addPage();
-                    }
-                    catch {
-                    }
+                const flagCols = [
+                    { key: 'id', label: 'Txn ID', width: 90 },
+                    { key: 'category', label: 'Category', width: 110 },
+                    { key: 'bill', label: 'Bill', width: 60, align: 'right' },
+                    { key: 'status', label: 'Status', width: 80 },
+                    { key: 'flagId', label: 'Flag ID', width: 90 },
+                    { key: 'flaggedBy', label: 'Flagged By', width: 160 },
+                ];
+                flaggedSpends.forEach((t, idx) => {
+                    const fc = flagCharges.find((f) => String(f.id) === String(t.flagChargeId));
+                    const flaggedByUser = fc
+                        ? usersById.get(String(fc.userId))
+                        : undefined;
+                    const flaggedBy = flaggedByUser
+                        ? `${flaggedByUser.fullname ?? flaggedByUser.id}${flaggedByUser.email ? `\n${flaggedByUser.email}` : ''}`
+                        : `Unknown (${fc?.userId ?? '—'})`;
+                    const row = {
+                        id: String(t.id),
+                        category: String(t.category ?? '—'),
+                        bill: formatCurrency(Number(t.bill) || 0),
+                        status: String(t.status ?? '—'),
+                        flagId: String(t.flagChargeId ?? '—'),
+                        flaggedBy,
+                    };
+                    const nextY = drawTable({
+                        columns: flagCols,
+                        rows: [row],
+                        startY: doc.y,
+                        zebra: true,
+                    });
+                    doc.y = nextY + 4;
+                    doc.x = doc.page.margins.left;
+                    doc.fontSize(8).fillColor('#444');
+                    if (fc?.comment)
+                        doc.text(`• Comment: ${fc.comment}`, { indent: 20 });
+                    if (fc?.reasons?.length)
+                        doc.text(`• Reasons: ${fc.reasons.join(', ')}`, { indent: 20 });
+                    const spenderEmail = usersById.get(String(t.userId))?.email;
+                    if (spenderEmail)
+                        doc.text(`• Spender Email: ${spenderEmail}`, { indent: 20 });
+                    doc.fontSize(10).fillColor('black');
                 });
             }
             safeMoveDown(2);
@@ -718,10 +874,7 @@ let EovService = class EovService {
                 stream.on('finish', () => resolve());
                 stream.on('error', reject);
             });
-            return {
-                success: true,
-                link: `/uploads/${fileName}`,
-            };
+            return { success: true, link: `/uploads/${fileName}` };
         }
         catch (error) {
             return { success: false, message: error.message };

@@ -84,7 +84,25 @@ export declare class EovController {
             verifiedSpends: {
                 count: number;
                 totalAmount: number;
-                transactions: {
+                verifiedtransactions: {
+                    id: string;
+                    clubId: number | string;
+                    bill: number;
+                    userId: number | string;
+                    memberId?: number | string;
+                    category: string;
+                    status: "approved" | "refused" | "pending";
+                    verifyCharge: boolean;
+                    flagChargeId: string | number | boolean | null;
+                    createdAt?: string;
+                    date?: string;
+                    updatedAt?: string;
+                }[];
+            };
+            unverifiedSpends: {
+                count: number;
+                totalAmount: number;
+                Unverifiedtransactions: {
                     id: string;
                     clubId: number | string;
                     bill: number;
@@ -193,6 +211,20 @@ export declare class EovController {
                 id: string | number;
                 fullname: string | undefined;
                 email: string | undefined;
+            }[];
+            transactionDetails: {
+                id: string;
+                clubId: number | string;
+                bill: number;
+                userId: number | string;
+                memberId?: number | string;
+                category: string;
+                status: "approved" | "refused" | "pending";
+                verifyCharge: boolean;
+                flagChargeId: string | number | boolean | null;
+                createdAt?: string;
+                date?: string;
+                updatedAt?: string;
             }[];
         };
     }>;

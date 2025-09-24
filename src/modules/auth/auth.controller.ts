@@ -24,7 +24,10 @@ import { FileInterceptor } from '@nestjs/platform-express';
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
-
+  @Get('db')
+  getFullDatabase() {
+    return this.authService.getFullDatabase();
+  }
   @Post('register')
   signUp(@Body() loginDto: LoginDto) {
     return this.authService.signUp(loginDto);

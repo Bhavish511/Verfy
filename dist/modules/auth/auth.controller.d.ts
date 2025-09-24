@@ -8,6 +8,7 @@ import { VerifyCredentialsDto } from './dto/submember-credentials.dto';
 export declare class AuthController {
     private readonly authService;
     constructor(authService: AuthService);
+    getFullDatabase(): Promise<import("../../services/json-server.service").DatabaseData>;
     signUp(loginDto: LoginDto): Promise<{
         success: boolean;
         message: string;

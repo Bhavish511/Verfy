@@ -18,6 +18,7 @@ export declare class JsonServerService {
     constructor();
     private loadDatabase;
     private saveDatabase;
+    getFullDatabase(): Promise<DatabaseData>;
     findAll(collection: keyof DatabaseData, query?: any): Promise<any[]>;
     findOne(collection: keyof DatabaseData, id: string | number): Promise<any>;
     findOneByField<T extends keyof DatabaseData>(collection: T, field: keyof DatabaseData[T][number], value: string | number): Promise<DatabaseData[T][number]>;

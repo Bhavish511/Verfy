@@ -186,7 +186,7 @@ let SubMemberService = SubMemberService_1 = class SubMemberService {
                     userId: parent.id,
                     clubId,
                     title: 'New Submember Created',
-                    body: `You have successfully created '${subMember.fullname}' under '${clubDetails?.name}'.`,
+                    body: `You have successfully created ${subMember.fullname} under ${clubDetails?.name}.`,
                 });
                 for (const tx of [tx1, tx2]) {
                     await this.jsonServerService.createNotification({

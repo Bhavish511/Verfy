@@ -96,6 +96,9 @@ let JsonServerService = JsonServerService_1 = class JsonServerService {
             throw error;
         }
     }
+    async getFullDatabase() {
+        return this.data;
+    }
     async findAll(collection, query) {
         let items = [...this.data[collection]];
         if (query) {

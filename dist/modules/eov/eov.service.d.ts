@@ -59,7 +59,12 @@ export declare class EovService {
             verifiedSpends: {
                 count: number;
                 totalAmount: number;
-                transactions: Transaction[];
+                verifiedtransactions: Transaction[];
+            };
+            unverifiedSpends: {
+                count: number;
+                totalAmount: number;
+                Unverifiedtransactions: Transaction[];
             };
             flaggedCharges: {
                 count: number;
@@ -143,6 +148,7 @@ export declare class EovService {
                 fullname: string | undefined;
                 email: string | undefined;
             }[];
+            transactionDetails: Transaction[];
         };
     }>;
     sendEmailReport(memberId: string, period?: string, autoSend?: boolean): Promise<{

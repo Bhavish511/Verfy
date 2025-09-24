@@ -66,7 +66,9 @@ export class JsonServerService {
       throw error;
     }
   }
-
+  async getFullDatabase(): Promise<DatabaseData> {
+  return this.data;
+}
   // Generic CRUD operations
   async findAll(collection: keyof DatabaseData, query?: any): Promise<any[]> {
     let items = [...this.data[collection]];

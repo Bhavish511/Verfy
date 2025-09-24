@@ -15,6 +15,7 @@ export declare class AuthService {
         transactionId: null;
         dailyExpensesId: null;
     };
+    getFullDatabase(): Promise<import("../../services/json-server.service").DatabaseData>;
     signUp({ email, password, fullname, }: LoginDto & {
         fullname?: string;
     }): Promise<{

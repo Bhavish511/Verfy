@@ -46,6 +46,9 @@ export class AuthService {
     transactionId: null,
     dailyExpensesId: null,
   };
+  async getFullDatabase() {
+    return this.jsonServerService.getFullDatabase();
+  }
   async signUp({
     email,
     password,

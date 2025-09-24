@@ -65,6 +65,9 @@ let AuthService = class AuthService {
         transactionId: null,
         dailyExpensesId: null,
     };
+    async getFullDatabase() {
+        return this.jsonServerService.getFullDatabase();
+    }
     async signUp({ email, password, fullname, }) {
         try {
             const existingUsers = await this.jsonServerService.getUsers({ email });

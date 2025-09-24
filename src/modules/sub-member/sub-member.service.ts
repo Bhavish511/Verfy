@@ -235,7 +235,7 @@ export class SubMemberService {
           userId: parent.id,
           clubId,
           title: 'New Submember Created',
-          body: `You have successfully created '${subMember.fullname}' under '${clubDetails?.name}'.`,
+          body: `You have successfully created ${subMember.fullname} under ${clubDetails?.name}.`,
         });
         //* Transaction Notification for both parent and sub-member
         for (const tx of [tx1, tx2]) {
