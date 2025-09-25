@@ -1,6 +1,8 @@
 # For NOTIFICATION SEARCH IN PROJECT
   "//* " ---> # The all notification were implementation were shown 
 
+# TO GET DB.JSON
+GET auth/db
 
 
 # 🚀 Complete API Documentation

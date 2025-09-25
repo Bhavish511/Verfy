@@ -23,9 +23,8 @@ let EovController = class EovController {
     constructor(eovService) {
         this.eovService = eovService;
     }
-    async getDashboard(req) {
-        const userId = String(req.user?.id);
-        return this.eovService.getDashboard(userId);
+    getDashboard(req) {
+        return this.eovService.getDashboard(req);
     }
     async exportPdf(req, period) {
         const userId = String(req.user?.id);
@@ -48,7 +47,7 @@ __decorate([
     __param(0, (0, common_1.Req)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
-    __metadata("design:returntype", Promise)
+    __metadata("design:returntype", void 0)
 ], EovController.prototype, "getDashboard", null);
 __decorate([
     (0, common_1.UseGuards)(auth_guard_1.AuthGuard),

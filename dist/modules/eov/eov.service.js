@@ -56,33 +56,33 @@ let EovService = class EovService {
         this.http = http;
         this.jsonServerService = jsonServerService;
     }
-    async getDashboard(memberId) {
+    async getDashboard(req) {
         try {
+            const user = req.user;
+            const memberId = String(user.id);
+            console.log(memberId);
             if (!memberId)
                 throw new common_1.BadRequestException('Missing authenticated user id');
-            const member = await this.fetchUser(memberId);
-            if ((member.roles ?? 'member') !== 'member') {
+            if ((user.roles ?? 'member') !== 'member') {
                 throw new common_1.BadRequestException('EOV dashboard is only accessible to members, not sub-members.');
             }
             const subMembers = await this.fetchSubMembersForMember(memberId);
+            console.log(subMembers);
             const allUserIds = [memberId, ...subMembers.map((s) => String(s.id))];
             const allUserClubs = (await Promise.all(allUserIds.map((uid) => this.jsonServerService.getUserClubs({
                 userId: uid,
-                clubId: member.currently_at,
+                clubId: user.currently_at,
             })))).flat();
             const totalAllowance = allUserClubs.reduce((sum, uc) => sum + (Number(uc.totalAllowance) || 0), 0);
             const totalSpending = allUserClubs.reduce((sum, uc) => sum + (Number(uc.totalSpent) || 0), 0);
             const remainingAllowance = totalAllowance - totalSpending;
-            const allTransactions = await this.jsonServerService.getTransactions();
-            const memberTransactions = allTransactions.filter((tx) => allUserIds.includes(String(tx.userId)));
-            const flaggedTransactions = memberTransactions.filter((tx) => tx.flagChargeId);
-            const flagCharges = await this.jsonServerService.getFlagCharges();
-            const memberFlagCharges = flagCharges.filter((fc) => allUserIds.includes(String(fc.userId)));
+            const allTransactions = await this.jsonServerService.getTransactions({ memberId: memberId, clubId: user.currently_at });
+            const flaggedTransactions = allTransactions.filter((tx) => tx.flagChargeId);
             return {
                 success: true,
                 message: 'Dashboard data retrieved successfully',
                 data: {
-                    flaggedChargeCount: memberFlagCharges.length,
+                    flaggedChargeCount: flaggedTransactions.length,
                     totalSpending,
                     totalAllowance,
                     flaggedTransactions: flaggedTransactions,

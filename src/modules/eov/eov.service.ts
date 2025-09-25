@@ -72,14 +72,19 @@ export class EovService {
     private readonly jsonServerService: JsonServerService,
   ) {}
 
-  async getDashboard(memberId: string) {
+  async getDashboard(req) {
     try {
+      const user = req.user;
+      // console.log(user);
+      
+      const memberId = String(user.id);
+      console.log(memberId);
+      
       if (!memberId)
         throw new BadRequestException('Missing authenticated user id');
 
       // 1) Load member and check if it's actually a member
-      const member = await this.fetchUser(memberId);
-      if ((member.roles ?? 'member') !== 'member') {
+      if ((user.roles ?? 'member') !== 'member') {
         throw new BadRequestException(
           'EOV dashboard is only accessible to members, not sub-members.',
         );
@@ -87,6 +92,8 @@ export class EovService {
 
       // 2) Get all sub-members under this member
       const subMembers = await this.fetchSubMembersForMember(memberId);
+      console.log(subMembers);
+      
       const allUserIds = [memberId, ...subMembers.map((s) => String(s.id))];
 
       // 3) Get all user clubs for member + sub-members
@@ -95,12 +102,13 @@ export class EovService {
           allUserIds.map((uid) =>
             this.jsonServerService.getUserClubs({
               userId: uid,
-              clubId: member.currently_at,
+              clubId: user.currently_at,
             }),
           ),
         )
       ).flat();
-
+      // console.log(allUserClubs);
+      
       // 4) Calculate totals from userClubs
       const totalAllowance = allUserClubs.reduce(
         (sum, uc) => sum + (Number(uc.totalAllowance) || 0),
@@ -114,27 +122,21 @@ export class EovService {
 
       const remainingAllowance = totalAllowance - totalSpending;
       // 3) Get all transactions for member and sub-members
-      const allTransactions = await this.jsonServerService.getTransactions();
-      const memberTransactions = allTransactions.filter((tx) =>
-        allUserIds.includes(String(tx.userId)),
-      );
+      const allTransactions = await this.jsonServerService.getTransactions({memberId:memberId,clubId:user.currently_at});
 
       // 6) Get flagged transactions
-      const flaggedTransactions = memberTransactions.filter(
+      const flaggedTransactions = allTransactions.filter(
         (tx) => tx.flagChargeId,
       );
 
-      // 7) Get flag charges count
-      const flagCharges = await this.jsonServerService.getFlagCharges();
-      const memberFlagCharges = flagCharges.filter((fc) =>
-        allUserIds.includes(String(fc.userId)),
-      );
+      // // 7) Get flag charges count
+      // const flagCharges = flaggedTransactions.length;
 
       return {
         success: true,
         message: 'Dashboard data retrieved successfully',
         data: {
-          flaggedChargeCount: memberFlagCharges.length,
+          flaggedChargeCount: flaggedTransactions.length,
           totalSpending,
           totalAllowance,
           flaggedTransactions: flaggedTransactions,

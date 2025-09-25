@@ -239,20 +239,19 @@ export class SubMemberService {
         });
         //* Transaction Notification for both parent and sub-member
         for (const tx of [tx1, tx2]) {
-          // Parent notification
-          await this.jsonServerService.createNotification({
-            userId: parent.id,
-            clubId,
-            title: 'Transaction Performed by Submember',
-            body: `${subMember.fullname} submitted a transaction of $${tx.bill} in ${clubDetails?.name}. Please review it.`,
-          });
-
           // Submember notification
           await this.jsonServerService.createNotification({
             userId: subMember.id,
             clubId,
             title: 'Transaction Submitted',
             body: `Your transaction of $${tx.bill} in ${clubDetails?.name} has been submitted for review.`,
+          });
+          // Parent notification
+          await this.jsonServerService.createNotification({
+            userId: parent.id,
+            clubId,
+            title: 'Transaction Performed by Submember',
+            body: `${subMember.fullname} submitted a transaction of $${tx.bill} in ${clubDetails?.name}. Please review it.`,
           });
         }
       }

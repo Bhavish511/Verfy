@@ -18,7 +18,7 @@ export declare class EovService {
     private readonly http;
     private readonly jsonServerService;
     constructor(http: HttpService, jsonServerService: JsonServerService);
-    getDashboard(memberId: string): Promise<{
+    getDashboard(req: any): Promise<{
         success: boolean;
         message: string;
         data: {

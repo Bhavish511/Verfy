@@ -190,16 +190,16 @@ let SubMemberService = SubMemberService_1 = class SubMemberService {
                 });
                 for (const tx of [tx1, tx2]) {
                     await this.jsonServerService.createNotification({
-                        userId: parent.id,
-                        clubId,
-                        title: 'Transaction Performed by Submember',
-                        body: `${subMember.fullname} submitted a transaction of $${tx.bill} in ${clubDetails?.name}. Please review it.`,
-                    });
-                    await this.jsonServerService.createNotification({
                         userId: subMember.id,
                         clubId,
                         title: 'Transaction Submitted',
                         body: `Your transaction of $${tx.bill} in ${clubDetails?.name} has been submitted for review.`,
+                    });
+                    await this.jsonServerService.createNotification({
+                        userId: parent.id,
+                        clubId,
+                        title: 'Transaction Performed by Submember',
+                        body: `${subMember.fullname} submitted a transaction of $${tx.bill} in ${clubDetails?.name}. Please review it.`,
                     });
                 }
             }

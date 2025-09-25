@@ -18,9 +18,8 @@ export class EovController {
   @UseGuards(AuthGuard)
   @Roles(Role.MEMBER)
   @Get('dashboard')
-  async getDashboard(@Req() req: any) {
-    const userId = String(req.user?.id);
-    return this.eovService.getDashboard(userId);
+  getDashboard(@Req() req: any) {
+    return this.eovService.getDashboard(req);
   }
 
   /**
