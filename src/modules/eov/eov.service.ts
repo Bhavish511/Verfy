@@ -1331,8 +1331,13 @@ export class EovService {
           // Immediately show comments/reasons/spender under the row
           doc.fontSize(8).fillColor('#444');
           if (fc?.comment) doc.text(`• Comment: ${fc.comment}`, { indent: 20 });
-          if (fc?.reasons?.length)
-            doc.text(`• Reasons: ${fc.reasons.join(', ')}`, { indent: 20 });
+          if (fc?.reasons) {
+            const reasons = Array.isArray(fc.reasons) ? fc.reasons : [fc.reasons];
+            if (reasons.length > 0) {
+                doc.text(`• Reasons: ${reasons.join(', ')}`, { indent: 20 });
+            }
+          }
+
           const spenderEmail = usersById.get(String(t.userId))?.email;
           if (spenderEmail)
             doc.text(`• Spender Email: ${spenderEmail}`, { indent: 20 });
