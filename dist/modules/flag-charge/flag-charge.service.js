@@ -61,9 +61,13 @@ let FlagChargeService = class FlagChargeService {
                 }
                 filePath = uploadResult.data?.filePath;
             }
+            const parsedReasons = typeof reasons === 'string' ? JSON.parse(reasons) : reasons;
+            const cleanComment = typeof comment === 'string' && comment.startsWith('"')
+                ? JSON.parse(comment)
+                : comment;
             const flagCharge = await this.jsonServerService.createFlagCharge({
-                reasons,
-                comment,
+                reasons: parsedReasons,
+                comment: cleanComment,
                 file: filePath,
                 userId,
                 transactionId: transaction.id,

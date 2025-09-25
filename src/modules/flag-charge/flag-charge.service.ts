@@ -83,11 +83,16 @@ export class FlagChargeService {
         }
         filePath = uploadResult.data?.filePath;
       }
-
+      const parsedReasons =
+        typeof reasons === 'string' ? JSON.parse(reasons) : reasons;
+      const cleanComment =
+        typeof comment === 'string' && comment.startsWith('"')
+          ? JSON.parse(comment)
+          : comment;
       // 5. Create flag charge record
       const flagCharge = await this.jsonServerService.createFlagCharge({
-        reasons,
-        comment,
+        reasons: parsedReasons,
+        comment:cleanComment,
         file: filePath,
         userId,
         transactionId: transaction.id,
@@ -127,7 +132,7 @@ export class FlagChargeService {
       const parentBody = `You flagged the transaction of $${transaction.bill} made by ${userInfo?.fullname} in ${clubDetails?.name}.`;
       await this.jsonServerService.createNotification({
         userId,
-        clubId:clubDetails.id,
+        clubId: clubDetails.id,
         title: 'Transaction Flagged',
         body: parentBody,
       });
@@ -136,7 +141,7 @@ export class FlagChargeService {
         const childBody = `Your transaction of $${transaction.bill} was flagged by ${parentInfo?.fullname} in ${clubDetails?.name}. Please review it.`;
         await this.jsonServerService.createNotification({
           userId: transaction.userId,
-          clubId:clubDetails.id,
+          clubId: clubDetails.id,
           title: 'Transaction Flagged',
           body: childBody,
         });

@@ -151,6 +151,156 @@
       "updatedAt": "2025-01-10T10:00:00.000Z"
     },
     {
+      "id": "111",
+      "fullname": "Primary User 11",
+      "email": "primaryuser11@gmail.com",
+      "password": "password12345",
+      "profilePic": null,
+      "under12": false,
+      "relation": null,
+      "currently_at": "1",
+      "roles": "member",
+      "phone": "+1-555-1011",
+      "address": "111 Main St, City, Country",
+      "createdAt": "2025-01-11T10:00:00.000Z",
+      "updatedAt": "2025-01-11T10:00:00.000Z"
+    },
+    {
+      "id": "112",
+      "fullname": "Primary User 12",
+      "email": "primaryuser12@gmail.com",
+      "password": "password12345",
+      "profilePic": null,
+      "under12": false,
+      "relation": null,
+      "currently_at": "1",
+      "roles": "member",
+      "phone": "+1-555-1012",
+      "address": "112 Main St, City, Country",
+      "createdAt": "2025-01-12T10:00:00.000Z",
+      "updatedAt": "2025-01-12T10:00:00.000Z"
+    },
+    {
+      "id": "113",
+      "fullname": "Primary User 13",
+      "email": "primaryuser13@gmail.com",
+      "password": "password12345",
+      "profilePic": null,
+      "under12": false,
+      "relation": null,
+      "currently_at": "1",
+      "roles": "member",
+      "phone": "+1-555-1013",
+      "address": "113 Main St, City, Country",
+      "createdAt": "2025-01-13T10:00:00.000Z",
+      "updatedAt": "2025-01-13T10:00:00.000Z"
+    },
+    {
+      "id": "114",
+      "fullname": "Primary User 14",
+      "email": "primaryuser14@gmail.com",
+      "password": "password12345",
+      "profilePic": null,
+      "under12": false,
+      "relation": null,
+      "currently_at": "2",
+      "roles": "member",
+      "phone": "+1-555-1014",
+      "address": "114 Main St, City, Country",
+      "createdAt": "2025-01-14T10:00:00.000Z",
+      "updatedAt": "2025-09-25T07:23:52.773Z"
+    },
+    {
+      "id": "115",
+      "fullname": "Primary User 15",
+      "email": "primaryuser15@gmail.com",
+      "password": "password12345",
+      "profilePic": null,
+      "under12": false,
+      "relation": null,
+      "currently_at": "1",
+      "roles": "member",
+      "phone": "+1-555-1015",
+      "address": "115 Main St, City, Country",
+      "createdAt": "2025-01-15T10:00:00.000Z",
+      "updatedAt": "2025-01-15T10:00:00.000Z"
+    },
+    {
+      "id": "116",
+      "fullname": "Primary User 16",
+      "email": "primaryuser16@gmail.com",
+      "password": "password12345",
+      "profilePic": null,
+      "under12": false,
+      "relation": null,
+      "currently_at": "1",
+      "roles": "member",
+      "phone": "+1-555-1016",
+      "address": "116 Main St, City, Country",
+      "createdAt": "2025-01-16T10:00:00.000Z",
+      "updatedAt": "2025-01-16T10:00:00.000Z"
+    },
+    {
+      "id": "117",
+      "fullname": "Primary User 17",
+      "email": "primaryuser17@gmail.com",
+      "password": "password12345",
+      "profilePic": null,
+      "under12": false,
+      "relation": null,
+      "currently_at": "1",
+      "roles": "member",
+      "phone": "+1-555-1017",
+      "address": "117 Main St, City, Country",
+      "createdAt": "2025-01-17T10:00:00.000Z",
+      "updatedAt": "2025-01-17T10:00:00.000Z"
+    },
+    {
+      "id": "118",
+      "fullname": "Primary User 18",
+      "email": "primaryuser18@gmail.com",
+      "password": "password12345",
+      "profilePic": null,
+      "under12": false,
+      "relation": null,
+      "currently_at": "1",
+      "roles": "member",
+      "phone": "+1-555-1018",
+      "address": "118 Main St, City, Country",
+      "createdAt": "2025-01-18T10:00:00.000Z",
+      "updatedAt": "2025-01-18T10:00:00.000Z"
+    },
+    {
+      "id": "119",
+      "fullname": "Primary User 19",
+      "email": "primaryuser19@gmail.com",
+      "password": "password12345",
+      "profilePic": null,
+      "under12": false,
+      "relation": null,
+      "currently_at": "1",
+      "roles": "member",
+      "phone": "+1-555-1019",
+      "address": "119 Main St, City, Country",
+      "createdAt": "2025-01-19T10:00:00.000Z",
+      "updatedAt": "2025-01-19T10:00:00.000Z"
+    },
+    {
+      "id": "120",
+      "fullname": "Primary User 20",
+      "email": "primaryuser20@gmail.com",
+      "password": "password12345",
+      "profilePic": null,
+      "under12": false,
+      "relation": null,
+      "currently_at": "1",
+      "roles": "member",
+      "phone": "+1-555-1020",
+      "address": "120 Main St, City, Country",
+      "createdAt": "2025-01-20T10:00:00.000Z",
+      "updatedAt": "2025-01-20T10:00:00.000Z"
+    },
+    {
       "id": "1",
       "fullname": "Touseef Ali",
       "email": "touseef3@example.com",
@@ -663,12 +813,12 @@
       "bill": 30,
       "category": "Transportation",
       "description": "Transportation",
-      "status": "pending",
+      "status": "refused",
       "verifyCharge": false,
-      "flagChargeId": false,
+      "flagChargeId": "ocb1rw2bk",
       "date": "2025-09-24T22:37:55.899Z",
       "createdAt": "2025-09-24T22:37:55.899Z",
-      "updatedAt": "2025-09-24T22:37:55.899Z"
+      "updatedAt": "2025-09-25T15:08:16.432Z"
     },
     {
       "id": "dfyc6clwh",
@@ -759,6 +909,19 @@
       "flaggedBy": "104",
       "createdAt": "2025-09-25T08:43:04.753Z",
       "updatedAt": "2025-09-25T08:43:04.753Z"
+    },
+    {
+      "id": "ocb1rw2bk",
+      "reasons": [
+        "suspicious_amount",
+        "unexpected_merchant"
+      ],
+      "comment": "This charge seems unusual for this location",
+      "userId": "104",
+      "transactionId": "ns5gvdtwf",
+      "flaggedBy": "104",
+      "createdAt": "2025-09-25T15:08:16.431Z",
+      "updatedAt": "2025-09-25T15:08:16.431Z"
     }
   ],
   "daily_expenses": [
@@ -1092,6 +1255,186 @@
     }
   ],
   "user_clubs": [
+    {
+      "id": "uc-111-1",
+      "userId": "111",
+      "clubId": "1",
+      "billingCycle": "monthly",
+      "memberId": "111",
+      "totalAllowance": 5000,
+      "totalSpent": 0
+    },
+    {
+      "id": "uc-111-2",
+      "userId": "111",
+      "clubId": "2",
+      "billingCycle": "monthly",
+      "memberId": "111",
+      "totalAllowance": 5000,
+      "totalSpent": 0
+    },
+    {
+      "id": "uc-112-1",
+      "userId": "112",
+      "clubId": "1",
+      "billingCycle": "monthly",
+      "memberId": "112",
+      "totalAllowance": 5000,
+      "totalSpent": 0
+    },
+    {
+      "id": "uc-112-2",
+      "userId": "112",
+      "clubId": "2",
+      "billingCycle": "monthly",
+      "memberId": "112",
+      "totalAllowance": 5000,
+      "totalSpent": 0
+    },
+    {
+      "id": "uc-113-1",
+      "userId": "113",
+      "clubId": "1",
+      "billingCycle": "monthly",
+      "memberId": "113",
+      "totalAllowance": 5000,
+      "totalSpent": 0
+    },
+    {
+      "id": "uc-113-2",
+      "userId": "113",
+      "clubId": "2",
+      "billingCycle": "monthly",
+      "memberId": "113",
+      "totalAllowance": 5000,
+      "totalSpent": 0
+    },
+    {
+      "id": "uc-114-1",
+      "userId": "114",
+      "clubId": "1",
+      "billingCycle": "monthly",
+      "memberId": "114",
+      "totalAllowance": 5000,
+      "totalSpent": 0
+    },
+    {
+      "id": "uc-114-2",
+      "userId": "114",
+      "clubId": "2",
+      "billingCycle": "monthly",
+      "memberId": "114",
+      "totalAllowance": 5000,
+      "totalSpent": 0
+    },
+    {
+      "id": "uc-115-1",
+      "userId": "115",
+      "clubId": "1",
+      "billingCycle": "monthly",
+      "memberId": "115",
+      "totalAllowance": 5000,
+      "totalSpent": 0
+    },
+    {
+      "id": "uc-115-2",
+      "userId": "115",
+      "clubId": "2",
+      "billingCycle": "monthly",
+      "memberId": "115",
+      "totalAllowance": 5000,
+      "totalSpent": 0
+    },
+    {
+      "id": "uc-116-1",
+      "userId": "116",
+      "clubId": "1",
+      "billingCycle": "monthly",
+      "memberId": "116",
+      "totalAllowance": 5000,
+      "totalSpent": 0
+    },
+    {
+      "id": "uc-116-2",
+      "userId": "116",
+      "clubId": "2",
+      "billingCycle": "monthly",
+      "memberId": "116",
+      "totalAllowance": 5000,
+      "totalSpent": 0
+    },
+    {
+      "id": "uc-117-1",
+      "userId": "117",
+      "clubId": "1",
+      "billingCycle": "monthly",
+      "memberId": "117",
+      "totalAllowance": 5000,
+      "totalSpent": 0
+    },
+    {
+      "id": "uc-117-2",
+      "userId": "117",
+      "clubId": "2",
+      "billingCycle": "monthly",
+      "memberId": "117",
+      "totalAllowance": 5000,
+      "totalSpent": 0
+    },
+    {
+      "id": "uc-118-1",
+      "userId": "118",
+      "clubId": "1",
+      "billingCycle": "monthly",
+      "memberId": "118",
+      "totalAllowance": 5000,
+      "totalSpent": 0
+    },
+    {
+      "id": "uc-118-2",
+      "userId": "118",
+      "clubId": "2",
+      "billingCycle": "monthly",
+      "memberId": "118",
+      "totalAllowance": 5000,
+      "totalSpent": 0
+    },
+    {
+      "id": "uc-119-1",
+      "userId": "119",
+      "clubId": "1",
+      "billingCycle": "monthly",
+      "memberId": "119",
+      "totalAllowance": 5000,
+      "totalSpent": 0
+    },
+    {
+      "id": "uc-119-2",
+      "userId": "119",
+      "clubId": "2",
+      "billingCycle": "monthly",
+      "memberId": "119",
+      "totalAllowance": 5000,
+      "totalSpent": 0
+    },
+    {
+      "id": "uc-120-1",
+      "userId": "120",
+      "clubId": "1",
+      "billingCycle": "monthly",
+      "memberId": "120",
+      "totalAllowance": 5000,
+      "totalSpent": 0
+    },
+    {
+      "id": "uc-120-2",
+      "userId": "120",
+      "clubId": "2",
+      "billingCycle": "monthly",
+      "memberId": "120",
+      "totalAllowance": 5000,
+      "totalSpent": 0
+    },
     {
       "id": "uc-101-1",
       "userId": "101",
@@ -1977,6 +2320,78 @@
       "body": "Your transaction of $20 was flagged by Primary User 04 in Marketing Club. Please review it.",
       "createdAt": "2025-09-25T08:43:04.758Z",
       "updatedAt": "2025-09-25T08:43:04.758Z"
+    },
+    {
+      "id": "gsxyroonz",
+      "userId": "104",
+      "clubId": "2",
+      "title": "Transaction Flagged",
+      "body": "You flagged the transaction of $30 made by Sub02pri04 in Marketing Club.",
+      "createdAt": "2025-09-25T10:47:08.580Z",
+      "updatedAt": "2025-09-25T10:47:08.580Z"
+    },
+    {
+      "id": "f229bkaxc",
+      "userId": "omhn3fb4x",
+      "clubId": "2",
+      "title": "Transaction Flagged",
+      "body": "Your transaction of $30 was flagged by Primary User 04 in Marketing Club. Please review it.",
+      "createdAt": "2025-09-25T10:47:08.581Z",
+      "updatedAt": "2025-09-25T10:47:08.581Z"
+    },
+    {
+      "id": "j10tkun0l",
+      "userId": "104",
+      "clubId": "2",
+      "title": "Transaction Flagged",
+      "body": "You flagged the transaction of $30 made by Sub02pri04 in Marketing Club.",
+      "createdAt": "2025-09-25T15:02:43.364Z",
+      "updatedAt": "2025-09-25T15:02:43.364Z"
+    },
+    {
+      "id": "1ndmwzvyn",
+      "userId": "omhn3fb4x",
+      "clubId": "2",
+      "title": "Transaction Flagged",
+      "body": "Your transaction of $30 was flagged by Primary User 04 in Marketing Club. Please review it.",
+      "createdAt": "2025-09-25T15:02:43.365Z",
+      "updatedAt": "2025-09-25T15:02:43.365Z"
+    },
+    {
+      "id": "gkcdwqex5",
+      "userId": "104",
+      "clubId": "2",
+      "title": "Transaction Flagged",
+      "body": "You flagged the transaction of $30 made by Sub02pri04 in Marketing Club.",
+      "createdAt": "2025-09-25T15:06:31.100Z",
+      "updatedAt": "2025-09-25T15:06:31.100Z"
+    },
+    {
+      "id": "yuvlf7jkg",
+      "userId": "omhn3fb4x",
+      "clubId": "2",
+      "title": "Transaction Flagged",
+      "body": "Your transaction of $30 was flagged by Primary User 04 in Marketing Club. Please review it.",
+      "createdAt": "2025-09-25T15:06:31.101Z",
+      "updatedAt": "2025-09-25T15:06:31.101Z"
+    },
+    {
+      "id": "m7totl8yx",
+      "userId": "104",
+      "clubId": "2",
+      "title": "Transaction Flagged",
+      "body": "You flagged the transaction of $30 made by Sub02pri04 in Marketing Club.",
+      "createdAt": "2025-09-25T15:08:16.434Z",
+      "updatedAt": "2025-09-25T15:08:16.434Z"
+    },
+    {
+      "id": "ysjnu6bi2",
+      "userId": "omhn3fb4x",
+      "clubId": "2",
+      "title": "Transaction Flagged",
+      "body": "Your transaction of $30 was flagged by Primary User 04 in Marketing Club. Please review it.",
+      "createdAt": "2025-09-25T15:08:16.435Z",
+      "updatedAt": "2025-09-25T15:08:16.435Z"
     }
   ]
 }

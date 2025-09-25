@@ -76,7 +76,10 @@ let EovService = class EovService {
             const totalAllowance = allUserClubs.reduce((sum, uc) => sum + (Number(uc.totalAllowance) || 0), 0);
             const totalSpending = allUserClubs.reduce((sum, uc) => sum + (Number(uc.totalSpent) || 0), 0);
             const remainingAllowance = totalAllowance - totalSpending;
-            const allTransactions = await this.jsonServerService.getTransactions({ memberId: memberId, clubId: user.currently_at });
+            const allTransactions = await this.jsonServerService.getTransactions({
+                memberId: memberId,
+                clubId: user.currently_at,
+            });
             const flaggedTransactions = allTransactions.filter((tx) => tx.flagChargeId);
             return {
                 success: true,
@@ -853,10 +856,39 @@ let EovService = class EovService {
                     doc.y = nextY + 4;
                     doc.x = doc.page.margins.left;
                     doc.fontSize(8).fillColor('#444');
-                    if (fc?.comment)
-                        doc.text(`• Comment: ${fc.comment}`, { indent: 20 });
+                    if (fc?.comment) {
+                        let comment = String(fc.comment).trim();
+                        try {
+                            const parsed = JSON.parse(comment);
+                            if (typeof parsed === 'string') {
+                                comment = parsed;
+                            }
+                        }
+                        catch {
+                        }
+                        if (comment.length > 0) {
+                            doc.text(`• Comment: ${comment}`, { indent: 20 });
+                        }
+                    }
                     if (fc?.reasons) {
-                        const reasons = Array.isArray(fc.reasons) ? fc.reasons : [fc.reasons];
+                        let reasons = [];
+                        if (Array.isArray(fc.reasons)) {
+                            reasons = fc.reasons.map(String);
+                        }
+                        else if (typeof fc.reasons === 'string') {
+                            try {
+                                const parsed = JSON.parse(fc.reasons);
+                                if (Array.isArray(parsed)) {
+                                    reasons = parsed.map(String);
+                                }
+                                else {
+                                    reasons = [fc.reasons];
+                                }
+                            }
+                            catch {
+                                reasons = [fc.reasons];
+                            }
+                        }
                         if (reasons.length > 0) {
                             doc.text(`• Reasons: ${reasons.join(', ')}`, { indent: 20 });
                         }

@@ -76,10 +76,10 @@ export class EovService {
     try {
       const user = req.user;
       // console.log(user);
-      
+
       const memberId = String(user.id);
       console.log(memberId);
-      
+
       if (!memberId)
         throw new BadRequestException('Missing authenticated user id');
 
@@ -93,7 +93,7 @@ export class EovService {
       // 2) Get all sub-members under this member
       const subMembers = await this.fetchSubMembersForMember(memberId);
       console.log(subMembers);
-      
+
       const allUserIds = [memberId, ...subMembers.map((s) => String(s.id))];
 
       // 3) Get all user clubs for member + sub-members
@@ -108,7 +108,7 @@ export class EovService {
         )
       ).flat();
       // console.log(allUserClubs);
-      
+
       // 4) Calculate totals from userClubs
       const totalAllowance = allUserClubs.reduce(
         (sum, uc) => sum + (Number(uc.totalAllowance) || 0),
@@ -122,7 +122,10 @@ export class EovService {
 
       const remainingAllowance = totalAllowance - totalSpending;
       // 3) Get all transactions for member and sub-members
-      const allTransactions = await this.jsonServerService.getTransactions({memberId:memberId,clubId:user.currently_at});
+      const allTransactions = await this.jsonServerService.getTransactions({
+        memberId: memberId,
+        clubId: user.currently_at,
+      });
 
       // 6) Get flagged transactions
       const flaggedTransactions = allTransactions.filter(
@@ -1330,11 +1333,43 @@ export class EovService {
 
           // Immediately show comments/reasons/spender under the row
           doc.fontSize(8).fillColor('#444');
-          if (fc?.comment) doc.text(`• Comment: ${fc.comment}`, { indent: 20 });
+          if (fc?.comment) {
+            let comment = String(fc.comment).trim();
+
+            // Try JSON.parse if it's a quoted string
+            try {
+              const parsed = JSON.parse(comment);
+              if (typeof parsed === 'string') {
+                comment = parsed;
+              }
+            } catch {
+              // not JSON, just keep as-is
+            }
+
+            if (comment.length > 0) {
+              doc.text(`• Comment: ${comment}`, { indent: 20 });
+            }
+          }
           if (fc?.reasons) {
-            const reasons = Array.isArray(fc.reasons) ? fc.reasons : [fc.reasons];
+            let reasons: string[] = [];
+
+            if (Array.isArray(fc.reasons)) {
+              // Already an array
+              reasons = fc.reasons.map(String);
+            } else if (typeof fc.reasons === 'string') {
+              try {
+                const parsed = JSON.parse(fc.reasons);
+                if (Array.isArray(parsed)) {
+                  reasons = parsed.map(String);
+                } else {
+                  reasons = [fc.reasons];
+                }
+              } catch {
+                reasons = [fc.reasons];
+              }
+            }
             if (reasons.length > 0) {
-                doc.text(`• Reasons: ${reasons.join(', ')}`, { indent: 20 });
+              doc.text(`• Reasons: ${reasons.join(', ')}`, { indent: 20 });
             }
           }
 
