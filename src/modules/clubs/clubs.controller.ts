@@ -20,37 +20,43 @@ export class ClubsController {
   constructor(private readonly clubsService: ClubsService) {}
 
   @Post()
-  create(@Body() createClubDto: CreateClubDto) {
-    return this.clubsService.create(createClubDto);
+  @UseGuards(AuthGuard)
+  create(@Req() req, @Body() createClubDto: CreateClubDto) {
+    const userId = req.user?.id || req.user?.userId;
+    return this.clubsService.createClub(userId, createClubDto);
   }
 
   @Get('club-member/get-clubs')
   @UseGuards(AuthGuard)
-  // @Roles(Role.MEMBER)
-  findAllforMember(@Req() req) {
-    return this.clubsService.findAllforMember(req);
+  findAllForMember(@Req() req) {
+    const userId = req.user?.id || req.user?.userId;
+    return this.clubsService.findAllForMember(userId);
   }
+
   @Get('club-sub-member/get-clubs')
   @UseGuards(AuthGuard)
   @Roles(Role.SUBMEMBER)
-  findAllforSubMember(@Req() req) {
-    return this.clubsService.findAllforSubMember(req);
+  findAllForSubMember(@Req() req) {
+    const userId = req.user?.id || req.user?.userId;
+    return this.clubsService.findAllForSubMember(userId);
   }
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.clubsService.findOne(+id);
+    return this.clubsService.getClubDetails(id);
   }
 
-  @Patch(':id')
+  @Patch('choose-club/:id')
   @UseGuards(AuthGuard)
-  @Roles(Role.SUBMEMBER)
-  choseClubforMember(@Param('id') id: string,@Req()req) {
-    return this.clubsService.choseClubforMember(+id, req);
+  @Roles(Role.SUBMEMBER, Role.MEMBER)
+  chooseClubForMember(@Param('id') id: string, @Req() req) {
+    const userId = req.user?.id || req.user?.userId;
+    return this.clubsService.chooseClubForMember(userId, id);
   }
 
   @Delete(':id')
+  @UseGuards(AuthGuard)
   remove(@Param('id') id: string) {
-    return this.clubsService.remove(+id);
+    return this.clubsService.removeClub(id);
   }
 }

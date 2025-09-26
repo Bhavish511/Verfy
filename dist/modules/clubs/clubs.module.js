@@ -10,16 +10,16 @@ exports.ClubsModule = void 0;
 const common_1 = require("@nestjs/common");
 const clubs_service_1 = require("./clubs.service");
 const clubs_controller_1 = require("./clubs.controller");
-const axios_1 = require("@nestjs/axios");
 const auth_module_1 = require("../auth/auth.module");
+const json_server_service_1 = require("../../services/json-server.service");
 let ClubsModule = class ClubsModule {
 };
 exports.ClubsModule = ClubsModule;
 exports.ClubsModule = ClubsModule = __decorate([
     (0, common_1.Module)({
-        imports: [axios_1.HttpModule, auth_module_1.AuthModule],
+        imports: [auth_module_1.AuthModule],
         controllers: [clubs_controller_1.ClubsController],
-        providers: [clubs_service_1.ClubsService],
+        providers: [clubs_service_1.ClubsService, json_server_service_1.JsonServerService],
     })
 ], ClubsModule);
 //# sourceMappingURL=clubs.module.js.map

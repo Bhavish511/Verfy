@@ -1,1 +1,1 @@
-{"version":3,"file":"create-club.dto.js","sourceRoot":"","sources":["../../../../src/modules/clubs/dto/create-club.dto.ts"],"names":[],"mappings":";;;AAAA,MAAa,aAAa;CAAG;AAA7B,sCAA6B"}
+{"version":3,"file":"create-club.dto.js","sourceRoot":"","sources":["../../../../src/modules/clubs/dto/create-club.dto.ts"],"names":[],"mappings":";;;AAAA,MAAa,aAAa;IACxB,IAAI,CAAS;IACb,QAAQ,CAAU;IAClB,YAAY,CAAmB;CAChC;AAJD,sCAIC"}

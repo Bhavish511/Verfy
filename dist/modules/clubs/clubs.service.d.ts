@@ -1,39 +1,45 @@
-import { BadRequestException } from '@nestjs/common';
+import { JsonServerService } from '../../services/json-server.service';
 import { CreateClubDto } from './dto/create-club.dto';
-import { HttpService } from '@nestjs/axios';
+import { UpdateClubDto } from './dto/update-club.dto';
 export declare class ClubsService {
-    private readonly httpService;
-    constructor(httpService: HttpService);
-    create(createClubDto: CreateClubDto): string;
-    findAllforMember(req: any): Promise<{
+    private readonly jsonServerService;
+    constructor(jsonServerService: JsonServerService);
+    createClub(userId: string, createClubDto: CreateClubDto): Promise<{
         success: boolean;
+        message: string;
         data: any;
-        message?: undefined;
-    } | {
-        success: boolean;
-        message: any;
-        data?: undefined;
     }>;
-    findAllforSubMember(req: any): Promise<{
+    findAllForMember(userId: string): Promise<{
+        success: boolean;
+        data: any[];
+    }>;
+    findAllForSubMember(userId: string): Promise<{
         success: boolean;
         data: {
-            clubs: any;
+            subMemberRelationships: any[];
+            clubs: any[];
         };
-        message?: undefined;
-    } | {
-        success: boolean;
-        message: any;
-        data?: undefined;
     }>;
-    findOne(id: number): string;
-    choseClubforMember(id: number, req: any): Promise<BadRequestException | {
+    chooseClubForMember(userId: string, clubId: string): Promise<{
         success: boolean;
+        message: string;
         data: any;
-        message?: undefined;
-    } | {
-        success: boolean;
-        message: any;
-        data?: undefined;
     }>;
-    remove(id: number): string;
+    updateClub(clubId: string, updateClubDto: UpdateClubDto): Promise<{
+        success: boolean;
+        message: string;
+        data: any;
+    }>;
+    removeClub(clubId: string): Promise<{
+        success: boolean;
+        message: string;
+    }>;
+    getClubDetails(clubId: string): Promise<{
+        success: boolean;
+        data: {
+            club: any;
+            members: any[];
+        };
+    }>;
+    private removeDuplicates;
 }

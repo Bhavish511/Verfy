@@ -24,31 +24,37 @@ let ClubsController = class ClubsController {
     constructor(clubsService) {
         this.clubsService = clubsService;
     }
-    create(createClubDto) {
-        return this.clubsService.create(createClubDto);
+    create(req, createClubDto) {
+        const userId = req.user?.id || req.user?.userId;
+        return this.clubsService.createClub(userId, createClubDto);
     }
-    findAllforMember(req) {
-        return this.clubsService.findAllforMember(req);
+    findAllForMember(req) {
+        const userId = req.user?.id || req.user?.userId;
+        return this.clubsService.findAllForMember(userId);
     }
-    findAllforSubMember(req) {
-        return this.clubsService.findAllforSubMember(req);
+    findAllForSubMember(req) {
+        const userId = req.user?.id || req.user?.userId;
+        return this.clubsService.findAllForSubMember(userId);
     }
     findOne(id) {
-        return this.clubsService.findOne(+id);
+        return this.clubsService.getClubDetails(id);
     }
-    choseClubforMember(id, req) {
-        return this.clubsService.choseClubforMember(+id, req);
+    chooseClubForMember(id, req) {
+        const userId = req.user?.id || req.user?.userId;
+        return this.clubsService.chooseClubForMember(userId, id);
     }
     remove(id) {
-        return this.clubsService.remove(+id);
+        return this.clubsService.removeClub(id);
     }
 };
 exports.ClubsController = ClubsController;
 __decorate([
     (0, common_1.Post)(),
-    __param(0, (0, common_1.Body)()),
+    (0, common_1.UseGuards)(auth_guard_1.AuthGuard),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [create_club_dto_1.CreateClubDto]),
+    __metadata("design:paramtypes", [Object, create_club_dto_1.CreateClubDto]),
     __metadata("design:returntype", void 0)
 ], ClubsController.prototype, "create", null);
 __decorate([
@@ -58,7 +64,7 @@ __decorate([
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
-], ClubsController.prototype, "findAllforMember", null);
+], ClubsController.prototype, "findAllForMember", null);
 __decorate([
     (0, common_1.Get)('club-sub-member/get-clubs'),
     (0, common_1.UseGuards)(auth_guard_1.AuthGuard),
@@ -67,7 +73,7 @@ __decorate([
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", void 0)
-], ClubsController.prototype, "findAllforSubMember", null);
+], ClubsController.prototype, "findAllForSubMember", null);
 __decorate([
     (0, common_1.Get)(':id'),
     __param(0, (0, common_1.Param)('id')),
@@ -76,17 +82,18 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], ClubsController.prototype, "findOne", null);
 __decorate([
-    (0, common_1.Patch)(':id'),
+    (0, common_1.Patch)('choose-club/:id'),
     (0, common_1.UseGuards)(auth_guard_1.AuthGuard),
-    (0, roles_decorator_1.Roles)(roles_enum_1.Role.SUBMEMBER),
+    (0, roles_decorator_1.Roles)(roles_enum_1.Role.SUBMEMBER, roles_enum_1.Role.MEMBER),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Req)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", void 0)
-], ClubsController.prototype, "choseClubforMember", null);
+], ClubsController.prototype, "chooseClubForMember", null);
 __decorate([
     (0, common_1.Delete)(':id'),
+    (0, common_1.UseGuards)(auth_guard_1.AuthGuard),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),

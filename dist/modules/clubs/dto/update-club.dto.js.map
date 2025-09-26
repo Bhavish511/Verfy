@@ -1,1 +1,1 @@
-{"version":3,"file":"update-club.dto.js","sourceRoot":"","sources":["../../../../src/modules/clubs/dto/update-club.dto.ts"],"names":[],"mappings":";;;AAAA,uDAAmD;AACnD,uDAAkD;AAElD,MAAa,aAAc,SAAQ,IAAA,0BAAW,EAAC,+BAAa,CAAC;CAAG;AAAhE,sCAAgE"}
+{"version":3,"file":"update-club.dto.js","sourceRoot":"","sources":["../../../../src/modules/clubs/dto/update-club.dto.ts"],"names":[],"mappings":";;;AAAA,MAAa,aAAa;IACxB,IAAI,CAAU;IACd,QAAQ,CAAU;IAClB,YAAY,CAAmB;CAChC;AAJD,sCAIC"}

@@ -11,62 +11,158 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ClubsService = void 0;
 const common_1 = require("@nestjs/common");
-const rxjs_1 = require("rxjs");
-const axios_1 = require("@nestjs/axios");
+const json_server_service_1 = require("../../services/json-server.service");
 let ClubsService = class ClubsService {
-    httpService;
-    constructor(httpService) {
-        this.httpService = httpService;
+    jsonServerService;
+    constructor(jsonServerService) {
+        this.jsonServerService = jsonServerService;
     }
-    create(createClubDto) {
-        return 'This action adds a new club';
-    }
-    async findAllforMember(req) {
+    async createClub(userId, createClubDto) {
         try {
-            const userId = req.user.id;
-            const { data } = await (0, rxjs_1.firstValueFrom)(this.httpService.get(`http://localhost:3001/clubs?userId=${userId}`));
-            return { success: true, data };
+            const clubData = {
+                name: createClubDto.name,
+                location: createClubDto.location || '',
+                userId: userId,
+                currently_at: createClubDto.currently_at || 0,
+            };
+            const club = await this.jsonServerService.createClub(clubData);
+            return {
+                success: true,
+                message: 'Club created successfully',
+                data: club,
+            };
         }
         catch (error) {
-            return { success: false, message: error.message };
+            throw new common_1.InternalServerErrorException('Failed to create club: ' + error.message);
         }
     }
-    async findAllforSubMember(req) {
+    async findAllForMember(userId) {
         try {
-            const userId = req.user.id;
-            const { data: subMember } = await (0, rxjs_1.firstValueFrom)(this.httpService.get(`http://localhost:3001/users?parentId=${userId}`));
-            const { data: clubs } = await (0, rxjs_1.firstValueFrom)(this.httpService.get(`http://localhost:3001/user_clubs?userId=${userId}`));
-            return { success: true, data: { clubs } };
+            const allClubs = await this.jsonServerService.getClubs();
+            const userClubs = allClubs.filter(club => club.userId === userId ||
+                club.userId?.toString() === userId.toString());
+            const userClubRelations = await this.jsonServerService.getUserClubs({ userId: userId });
+            const relationClubIds = userClubRelations.map(rel => rel.clubId);
+            const relationClubs = allClubs.filter(club => relationClubIds.includes(club.id) ||
+                relationClubIds.includes(club.id.toString()));
+            const allUserClubs = [...userClubs, ...relationClubs];
+            const uniqueClubs = this.removeDuplicates(allUserClubs, 'id');
+            return { success: true, data: uniqueClubs };
         }
         catch (error) {
-            return { success: false, message: error.message };
+            throw new common_1.InternalServerErrorException('Failed to fetch clubs for member: ' + error.message);
         }
     }
-    findOne(id) {
-        return `This action returns a #${id} club`;
-    }
-    async choseClubforMember(id, req) {
+    async findAllForSubMember(userId) {
         try {
-            const userId = req.user.id;
-            const { data: club } = await (0, rxjs_1.firstValueFrom)(this.httpService.get(`http://localhost:3001/clubs?userId=${userId}`));
-            if (!club)
-                return new common_1.BadRequestException('Club not Found!');
-            const { data } = await (0, rxjs_1.firstValueFrom)(this.httpService.patch(`http://localhost:3001/users/${userId}`, {
-                currently_at: id,
-            }));
-            return { success: true, data };
+            const subMemberClubs = await this.jsonServerService.getClubsForParentMember(userId);
+            const clubIds = subMemberClubs.map(rel => rel.clubId);
+            const allClubs = await this.jsonServerService.getClubs();
+            const clubs = allClubs.filter(club => clubIds.includes(club.id) || clubIds.includes(club.id.toString()));
+            return {
+                success: true,
+                data: {
+                    subMemberRelationships: subMemberClubs,
+                    clubs: clubs
+                }
+            };
         }
         catch (error) {
-            return { success: false, message: error.message };
+            throw new common_1.InternalServerErrorException('Failed to fetch sub-member clubs: ' + error.message);
         }
     }
-    remove(id) {
-        return `This action removes a #${id} club`;
+    async chooseClubForMember(userId, clubId) {
+        try {
+            const club = await this.jsonServerService.getClub(clubId);
+            if (!club) {
+                throw new common_1.NotFoundException('Club not found');
+            }
+            const userClubs = await this.jsonServerService.getUserClubs({
+                userId: userId,
+                clubId: clubId
+            });
+            const allClubs = await this.jsonServerService.getClubs();
+            const directClubAccess = allClubs.find(c => c.id === clubId && c.userId === userId);
+            if (userClubs.length === 0 && !directClubAccess) {
+                throw new common_1.BadRequestException('User does not have access to this club');
+            }
+            const updatedUser = await this.jsonServerService.updateUser(userId, {
+                currently_at: clubId,
+            });
+            return {
+                success: true,
+                message: `Club ${club.name} selected successfully`,
+                data: updatedUser
+            };
+        }
+        catch (error) {
+            if (error instanceof common_1.NotFoundException || error instanceof common_1.BadRequestException) {
+                throw error;
+            }
+            throw new common_1.InternalServerErrorException('Failed to choose club for member: ' + error.message);
+        }
+    }
+    async updateClub(clubId, updateClubDto) {
+        try {
+            const updatedClub = await this.jsonServerService.updateClub(clubId, {
+                ...updateClubDto,
+                updatedAt: new Date().toISOString(),
+            });
+            return {
+                success: true,
+                message: 'Club updated successfully',
+                data: updatedClub,
+            };
+        }
+        catch (error) {
+            throw new common_1.InternalServerErrorException('Failed to update club: ' + error.message);
+        }
+    }
+    async removeClub(clubId) {
+        try {
+            const userClubs = await this.jsonServerService.getUserClubs({ clubId: clubId });
+            for (const relation of userClubs) {
+                await this.jsonServerService.deleteUserClub(relation.id);
+            }
+            await this.jsonServerService.deleteClub(clubId);
+            return {
+                success: true,
+                message: `Club ${clubId} and its relationships removed successfully`
+            };
+        }
+        catch (error) {
+            throw new common_1.InternalServerErrorException('Failed to remove club: ' + error.message);
+        }
+    }
+    async getClubDetails(clubId) {
+        try {
+            const club = await this.jsonServerService.getClub(clubId);
+            if (!club) {
+                throw new common_1.NotFoundException('Club not found');
+            }
+            const clubMembers = await this.jsonServerService.getUserClubs({ clubId: clubId });
+            return {
+                success: true,
+                data: {
+                    club,
+                    members: clubMembers,
+                },
+            };
+        }
+        catch (error) {
+            if (error instanceof common_1.NotFoundException) {
+                throw error;
+            }
+            throw new common_1.InternalServerErrorException('Failed to fetch club details: ' + error.message);
+        }
+    }
+    removeDuplicates(array, key) {
+        return array.filter((item, index, self) => index === self.findIndex(t => t[key] === item[key]));
     }
 };
 exports.ClubsService = ClubsService;
 exports.ClubsService = ClubsService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [axios_1.HttpService])
+    __metadata("design:paramtypes", [json_server_service_1.JsonServerService])
 ], ClubsService);
 //# sourceMappingURL=clubs.service.js.map

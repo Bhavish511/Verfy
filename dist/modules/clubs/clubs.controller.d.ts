@@ -3,36 +3,36 @@ import { CreateClubDto } from './dto/create-club.dto';
 export declare class ClubsController {
     private readonly clubsService;
     constructor(clubsService: ClubsService);
-    create(createClubDto: CreateClubDto): string;
-    findAllforMember(req: any): Promise<{
+    create(req: any, createClubDto: CreateClubDto): Promise<{
         success: boolean;
+        message: string;
         data: any;
-        message?: undefined;
-    } | {
-        success: boolean;
-        message: any;
-        data?: undefined;
     }>;
-    findAllforSubMember(req: any): Promise<{
+    findAllForMember(req: any): Promise<{
+        success: boolean;
+        data: any[];
+    }>;
+    findAllForSubMember(req: any): Promise<{
         success: boolean;
         data: {
-            clubs: any;
+            subMemberRelationships: any[];
+            clubs: any[];
         };
-        message?: undefined;
-    } | {
-        success: boolean;
-        message: any;
-        data?: undefined;
     }>;
-    findOne(id: string): string;
-    choseClubforMember(id: string, req: any): Promise<import("@nestjs/common").BadRequestException | {
+    findOne(id: string): Promise<{
         success: boolean;
+        data: {
+            club: any;
+            members: any[];
+        };
+    }>;
+    chooseClubForMember(id: string, req: any): Promise<{
+        success: boolean;
+        message: string;
         data: any;
-        message?: undefined;
-    } | {
-        success: boolean;
-        message: any;
-        data?: undefined;
     }>;
-    remove(id: string): string;
+    remove(id: string): Promise<{
+        success: boolean;
+        message: string;
+    }>;
 }
